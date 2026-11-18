@@ -80,7 +80,7 @@ export function Receipt() {
   };
 
   return (
-    <div className="h-[calc(100vh-65px)] w-full bg-background flex flex-col overflow-hidden">
+    <div className="min-h-[calc(100vh-65px)] w-full bg-background flex flex-col">
       <div className="container mx-auto h-full px-4">
         <div className="h-full grid lg:grid-cols-2 gap-8 items-center">
 
@@ -130,21 +130,24 @@ export function Receipt() {
             {/* Inline Styles forced for html2canvas compatibility with updated CSS/Vars */}
             <div
               id="receipt-card"
-              className="relative w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
+              className="relative isolate w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
               style={{ backgroundColor: '#000000', color: '#FFFFFF' }}
             >
-              {/* Foto de fondo y degradado: mismas medidas exactas dentro del contenedor relative/overflow-hidden. */}
-              <img
-                src={selectedMovie.poster}
-                alt=""
-                crossOrigin="anonymous"
-                decoding="async"
-                className="absolute inset-0 z-0 w-full h-full object-cover object-center opacity-30"
-              />
-              <div
-                className="absolute inset-0 z-0"
-                style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 100%)' }}
-              />
+              {/* Una sola capa de fondo: imagen y degradado comparten el mismo
+                  contenedor absoluto, por encima solo queda el contenido. */}
+              <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+                <img
+                  src={selectedMovie.poster}
+                  alt=""
+                  crossOrigin="anonymous"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 100%)' }}
+                />
+              </div>
 
               {/* Content Container */}
               <div className="relative z-10">

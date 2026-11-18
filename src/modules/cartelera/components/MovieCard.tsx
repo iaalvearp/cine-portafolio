@@ -1,12 +1,11 @@
 import { memo, useState } from 'react';
 import { Clock } from 'lucide-react';
-import { flushSync } from 'react-dom';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import type { Movie } from '@/modules/cartelera/types/Movie';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { cn } from '@/lib/utils';
-import { guardarOrigen } from '../lib/transicionPoster';
+import { conTransicion, nombrePoster } from '../lib/transicionPoster';
 
 interface MovieCardProps {
   movie: Movie;
@@ -40,10 +39,6 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
       style={{ animationDelay: `${index * 100}ms` }}
       onMouseEnter={() => precargarFondo(movie)}
       onTouchStart={() => precargarFondo(movie)}
-      onClickCapture={(e) => {
-        const im = e.currentTarget.querySelector('[data-poster-img]');
-        if (im) guardarOrigen(movie.id, im);
-      }}
     >
       <div className="relative overflow-hidden rounded-xl bg-card border border-border/50 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
         {/* Poster */}
@@ -57,7 +52,12 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
             decoding="async"
             loading={index < 6 ? 'eager' : 'lazy'}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            style={{ viewTransitionName: `movie-poster-${movie.id}` } as React.CSSProperties}
+            style={
+              {
+                viewTransitionName: nombrePoster(movie.id),
+                viewTransitionClass: 'poster',
+              } as React.CSSProperties
+            }
           />
           <div className="absolute inset-0 bg-linear-to-t from-card via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -81,17 +81,7 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
             <Button
               className="text-black hover:opacity-90 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 font-bold"
               style={{ background: 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--cinema-gold-light)))' }}
-              onClick={() => {
-                if (document.startViewTransition) {
-                  document.startViewTransition(() => {
-                    flushSync(() => {
-                      setSelectedMovie(movie);
-                    });
-                  });
-                } else {
-                  setSelectedMovie(movie);
-                }
-              }}
+              onClick={() => conTransicion(() => setSelectedMovie(movie))}
             >
               Ver Funciones
             </Button>
@@ -120,17 +110,7 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
       {/* Buy Button - Mobile */}
       <Button
         className="w-full mt-3 bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all lg:hidden"
-        onClick={() => {
-          if (document.startViewTransition) {
-            document.startViewTransition(() => {
-              flushSync(() => {
-                setSelectedMovie(movie);
-              });
-            });
-          } else {
-            setSelectedMovie(movie);
-          }
-        }}
+        onClick={() => conTransicion(() => setSelectedMovie(movie))}
       >
         Comprar
       </Button>

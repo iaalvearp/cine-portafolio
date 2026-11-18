@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { flushSync } from 'react-dom';
 import { ArrowLeft, Clock, Play, ChevronLeft, ChevronRight, Clapperboard } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -16,7 +15,7 @@ import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { API_ENDPOINTS, buildUrl } from '@/config/api';
 import { apiFetch } from '@/lib/localApi';
-import { tomarOrigen, prepararRegreso, reproducirRegreso } from '../lib/transicionPoster';
+import { conTransicion, nombrePoster } from '../lib/transicionPoster';
 
 interface BackendShowtime {
   id: number;
@@ -67,36 +66,9 @@ export function MovieDetail() {
     setGrandeLista(false);
   }, [selectedMovie?.fondo]);
 
-  // Animación de viaje: la miniatura tocada en la cartelera crece hasta el marco.
+  // El cambio de vista ya está envuelto en `startViewTransition` en la tarjeta y en «Regresar».
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
-    if (!selectedMovie) return;
-    const el = marcoRef.current;
-    if (!el || typeof el.animate !== 'function') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const origen = tomarOrigen(selectedMovie.id);
-    const r = el.getBoundingClientRect();
-    if (origen && r.width > 0 && r.height > 0) {
-      const dx = origen.left - r.left;
-      const dy = origen.top - r.top;
-      const sx = origen.width / r.width;
-      const sy = origen.height / r.height;
-      el.animate(
-        [
-          { transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
-          { transformOrigin: 'top left', transform: 'translate(0px, 0px) scale(1, 1)' },
-        ],
-        { duration: 700, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
-      );
-    } else {
-      el.animate(
-        [
-          { opacity: 0, transform: 'translateY(16px) scale(0.96)' },
-          { opacity: 1, transform: 'none' },
-        ],
-        { duration: 500, easing: 'ease-out' }
-      );
-    }
   }, [selectedMovie?.id]);
 
   if (!selectedMovie) return null;
@@ -257,58 +229,7 @@ export function MovieDetail() {
         <div className="mb-6">
           <Button
             className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-2 text-white backdrop-blur"
-            onClick={() => {
-              // Regreso inverso: el póster grande viaja hasta su miniatura en la cartelera.
-              const pelicula = selectedMovie.id;
-              const marco = marcoRef.current;
-              const caja = marco?.getBoundingClientRect();
-              const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-              const origen =
-                marco && caja && caja.width > 0 && caja.height > 0 && !reducido
-                  ? { left: caja.left, top: caja.top, width: caja.width, height: caja.height }
-                  : null;
-
-              const salir = () => {
-                flushSync(() => {
-                  setSelectedMovie(null);
-                });
-              };
-
-              // Sin animación posible: se vuelve a la cartelera tal cual.
-              if (!origen) {
-                salir();
-                return;
-              }
-
-              const viajar = () => {
-                try {
-                  reproducirRegreso();
-                } catch {
-                  /* nada que reproducir */
-                }
-              };
-
-              if (!document.startViewTransition) {
-                salir();
-                prepararRegreso(pelicula, marco, origen);
-                viajar();
-                return;
-              }
-
-              try {
-                const transicion = document.startViewTransition(() => {
-                  salir();
-                  prepararRegreso(pelicula, marco, origen);
-                });
-                // Se inicia al terminar (o al salto) el fundido: así no hay salto de fotograma.
-                transicion.finished.then(viajar, viajar);
-              } catch {
-                // Sin transición disponible: se vuelve y se anima directamente.
-                salir();
-                prepararRegreso(pelicula, marco, origen);
-                viajar();
-              }
-            }}
+            onClick={() => conTransicion(() => setSelectedMovie(null))}
           >
             <ArrowLeft className="w-5 h-5" />
             Regresar
@@ -329,7 +250,17 @@ export function MovieDetail() {
                 src={selectedMovie.poster}
                 alt={selectedMovie.title}
                 className="absolute inset-0 w-full h-full object-cover"
-                style={{ objectPosition: 'center top' }}
+                style={
+                  {
+                    objectPosition: 'center top',
+                    ...(grandeLista
+                      ? {}
+                      : {
+                          viewTransitionName: nombrePoster(selectedMovie.id),
+                          viewTransitionClass: 'poster',
+                        }),
+                  } as React.CSSProperties
+                }
               />
               {/* b) la imagen grande, encima, solo si es vertical y distinta del poster */}
               {orient === 'vertical' && selectedMovie.fondo !== selectedMovie.poster && (
@@ -341,7 +272,19 @@ export function MovieDetail() {
                   ref={(el) => { if (el && el.complete && el.naturalWidth) setGrandeLista(true); }}
                   onLoad={() => setGrandeLista(true)}
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ objectPosition: 'center top', opacity: grandeLista ? 1 : 0, transition: 'opacity 500ms ease' }}
+                  style={
+                    {
+                      objectPosition: 'center top',
+                      opacity: grandeLista ? 1 : 0,
+                      transition: 'opacity 500ms ease',
+                      ...(grandeLista
+                        ? {
+                            viewTransitionName: nombrePoster(selectedMovie.id),
+                            viewTransitionClass: 'poster',
+                          }
+                        : {}),
+                    } as React.CSSProperties
+                  }
                 />
               )}
               {/* c) insignia de clasificación */}

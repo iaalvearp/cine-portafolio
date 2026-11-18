@@ -252,3 +252,12 @@ footer {
   position: relative;
   z-index: 2;
 }
+
+/* Transición nativa del póster: el navegador interpola posición y tamaño
+   entre la miniatura de la tarjeta y la portada del detalle, en ambos sentidos. */
+::view-transition-group(.poster),
+::view-transition-old(.poster),
+::view-transition-new(.poster) {
+  animation-duration: 700ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}

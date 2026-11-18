@@ -1,46 +1,53 @@
-# Astro Starter Kit: Basics
+# To Talk — Demo de portafolio de cine
 
-```sh
-pnpm create astro@latest -- --template basics
+Proyecto de portafolio 100% estático para Cloudflare Pages. Simula la experiencia completa de una cartelera de cine: el visitante elige ciudad y cine, película, función, asientos y snacks, realiza un **pago simulado** y descarga su ticket en PDF.
+
+No hay backend, base de datos real ni servicios externos de pago. Todos los datos son inventados y viven en archivos locales de TypeScript.
+
+## Tecnologías
+
+- **Astro 5** (salida estática)
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS**
+- `html2canvas` + `jsPDF` para la descarga del ticket
+- `sonner` para los avisos
+
+## Puesta en marcha
+
+```bash
+pnpm install
+pnpm dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+El servidor de desarrollo queda disponible en `http://localhost:4321`.
 
-## 🚀 Project Structure
+Para generar el sitio estático:
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+```bash
+pnpm build
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+El resultado se escribe en `dist/`. En Cloudflare Pages usa:
 
-## 🧞 Commands
+- **Build command:** `pnpm build`
+- **Build output directory:** `dist`
 
-All commands are run from the root of the project, from a terminal:
+## Datos y sesión demo
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+- Las películas, cines, salas, funciones, snacks, promociones y beneficios se generan desde `src/data/seed/`.
+- Las funciones se calculan en tiempo de ejecución para los próximos 7 días, con asientos ocupados de ejemplo deterministas.
+- La sesión entra automáticamente como **Invitado**. Si cierras sesión, se muestra el login con credenciales públicas de demo: `invitado@demo.com` / `demo1234`.
+- "Crear cuenta" no crea nada: muestra un aviso de permisos de la demo.
+- Las reservas del visitante se guardan solo en `localStorage` (`cine_reservas`); el estado de la reserva en curso se mantiene en `sessionStorage`.
+- El formulario de pago usa una tarjeta de prueba y no envía ni guarda datos reales.
 
-## 👀 Want to learn more?
+## Migración desde el proyecto original
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+La lógica original en **Spring Boot 3 / Java 17 / PostgreSQL** fue migrada a datos locales y a un adaptador que imita la API REST (`src/lib/localApi.ts`). Las rutas se centralizan en `src/config/api.ts`. Las operaciones de escritura que no corresponden a la demo responden con un aviso de permisos en lugar de un error roto.
+
+El panel de administración y la gestión real de usuarios fueron eliminados: el visitante solo consulta y simula su compra.
+
+## Documentación adicional
+
+- `THEME_SYSTEM.md`: sistema de temas claro / oscuro / automático.

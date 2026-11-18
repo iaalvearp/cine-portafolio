@@ -11,4 +11,7 @@ export const salas: Sala[] = [
     { id: 2, name: 'Sala 2', type: 'Normal', capacity: 100, cinemaId: 2 },
     { id: 3, name: 'Sala VIP', type: 'VIP', capacity: 50, cinemaId: 2 },
     { id: 4, name: 'Sala 4D', type: '4D', capacity: 60, cinemaId: 2 },
+    { id: 5, name: 'Sala IMAX', type: 'IMAX', capacity: 120, cinemaId: 2 },
+    { id: 6, name: 'Sala 3D', type: '3D', capacity: 100, cinemaId: 2 },
+    { id: 7, name: 'Sala ATMOS', type: 'ATMOS', capacity: 80, cinemaId: 2 },
 ];

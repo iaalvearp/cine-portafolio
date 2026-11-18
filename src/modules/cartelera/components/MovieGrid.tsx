@@ -44,6 +44,18 @@ export function MovieGrid(props: any) {
     { time: "10:45 PM", available: 23, format: "3D" },
   ]
 
+  // El seed calcula estrenos relativos a hoy: usa la fecha cuando esté disponible
+  // y la bandera preSale solo como respaldo, para que ninguna película quede oculta.
+  const esEstreno = (movie: Movie) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(movie.releaseDate)) {
+      return new Date(`${movie.releaseDate}T00:00:00`).getTime() > Date.now();
+    }
+    return Boolean(movie.isPreSale);
+  }
+
+  const enCartelera = movies.filter(movie => !esEstreno(movie))
+  const proximosEstrenos = movies.filter(esEstreno)
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -94,14 +106,13 @@ export function MovieGrid(props: any) {
           </TabsList>
 
           <TabsContent value="cartelera" className="mt-0">
-            {movies.filter(m => !m.isPreSale).length === 0 ? (
+            {enCartelera.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 No hay películas en cartelera por el momento.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-                {movies
-                  .filter(m => !m.isPreSale)
+                {enCartelera
                   .map((movie, index) => (
                     <MovieCard key={movie.id} movie={movie} index={index} />
                   ))}
@@ -111,13 +122,12 @@ export function MovieGrid(props: any) {
 
           <TabsContent value="estrenos" className="mt-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-              {movies
-                .filter((m) => m.isPreSale)
+              {proximosEstrenos
                 .map((movie, index) => (
                   <MovieCard key={movie.id} movie={movie} index={index} />
                 ))}
             </div>
-            {movies.filter(m => m.isPreSale).length === 0 && (
+            {proximosEstrenos.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 No hay estrenos próximos por el momento.
               </div>

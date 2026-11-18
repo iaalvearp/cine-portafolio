@@ -16,6 +16,8 @@ interface BackendMovie {
     cast: string[];
     formats: string[];
     anio: number;
+    /** Fecha ISO calculada en el seed; se conserva `anio` para backend antiguos. */
+    releaseDate?: string;
     preSale: boolean;
 }
 
@@ -45,7 +47,7 @@ const adaptMovie = (backendMovie: BackendMovie): Movie => {
         synopsis: backendMovie.synopsis,
         director: backendMovie.director,
         cast: backendMovie.cast,
-        releaseDate: String(backendMovie.anio),
+        releaseDate: backendMovie.releaseDate || String(backendMovie.anio),
         language: 'ESP',
         format: backendMovie.formats,
         isPreSale: backendMovie.preSale || false,

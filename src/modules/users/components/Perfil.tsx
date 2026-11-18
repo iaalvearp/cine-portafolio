@@ -3,7 +3,6 @@ import { User, Mail, Phone, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { LoginForm } from './LoginForm';
-import { AdminPanel } from './AdminPanel';
 
 interface PerfilProps {
   [key: string]: any;
@@ -59,21 +58,6 @@ export function Perfil(_props: PerfilProps) {
             </div>
           )}
 
-          {/* Admin Header - Only for admins */}
-          {user.rol === 'ADMIN' && (
-            <div className="bg-card rounded-2xl border border-border p-6 mb-6 animate-fade-in">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-[#F5B041]/20 flex items-center justify-center">
-                  <Settings className="w-10 h-10 text-[#F5B041]" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
-                  <p className="text-muted-foreground">Bienvenido, {user.nombre}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Contact Info */}
           <div className="bg-card rounded-2xl border border-border p-6 mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
             <h2 className="text-lg font-semibold text-foreground mb-4">Información de Contacto</h2>
@@ -97,17 +81,6 @@ export function Perfil(_props: PerfilProps) {
               )}
             </div>
           </div>
-
-          {/* Admin Generic Panel */}
-          {user.rol === 'ADMIN' && (
-            <div className="mb-8 animate-fade-in" style={{ animationDelay: '300ms' }}>
-              <div className="flex items-center gap-2 mb-6">
-                <Settings className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-bold text-foreground">Panel de Administración</h2>
-              </div>
-              <AdminPanel />
-            </div>
-          )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">

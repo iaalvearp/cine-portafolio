@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, MapPin, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';

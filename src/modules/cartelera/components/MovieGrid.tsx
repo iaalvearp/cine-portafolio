@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { MovieCard } from "./MovieCard"
 // import { movies as mockMovies } from "@/data/mockData" // Comentado para usar datos reales

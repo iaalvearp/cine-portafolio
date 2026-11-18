@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Film, Candy, Gift, Percent, User } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"

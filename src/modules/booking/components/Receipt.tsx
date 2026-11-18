@@ -39,6 +39,23 @@ export function Receipt() {
     if (!element) return;
 
     try {
+      // html2canvas no espera a las imágenes: las decodificamos antes para que
+      // el PDF use exactamente lo que se ve en pantalla.
+      const imagenes = Array.from(element.querySelectorAll('img'));
+      await Promise.all(imagenes.map(async (img) => {
+        if (!img.complete) {
+          await new Promise<void>((resolve) => {
+            img.addEventListener('load', () => resolve(), { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          });
+        }
+        try {
+          await img.decode();
+        } catch {
+          // Si el navegador no puede decodificarla, se captura tal cual.
+        }
+      }));
+
       // Use a slightly larger scale for crisp text
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -116,29 +133,35 @@ export function Receipt() {
               className="relative w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
               style={{ backgroundColor: '#000000', color: '#FFFFFF' }}
             >
-              {/* Background Poster customized for opacity/overlay */}
-              <div className="absolute inset-0 z-0">
-                <img
-                  src={selectedMovie.poster}
-                  className="w-full h-full object-cover opacity-30"
-                  crossOrigin="anonymous"
-                  alt="bg"
-                />
-                <div className="absolute inset-0 bg-black/50" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} />
-              </div>
+              {/* Foto de fondo y degradado: mismas medidas exactas dentro del contenedor relative/overflow-hidden. */}
+              <img
+                src={selectedMovie.poster}
+                alt=""
+                crossOrigin="anonymous"
+                decoding="async"
+                className="absolute inset-0 z-0 w-full h-full object-cover object-center opacity-30"
+              />
+              <div
+                className="absolute inset-0 z-0"
+                style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 100%)' }}
+              />
 
               {/* Content Container */}
               <div className="relative z-10">
                 {/* Header Image */}
-                <div className="relative h-48 w-full">
+                <div className="relative h-48 w-full overflow-hidden">
                   <img
                     src={selectedMovie.poster}
                     alt={selectedMovie.title}
                     crossOrigin="anonymous"
-                    className="w-full h-full object-cover object-top"
-                    style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover object-center"
                   />
-                  <div className="absolute bottom-4 left-6 drop-shadow-md">
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85) 100%)' }}
+                  />
+                  <div className="absolute bottom-4 left-6 z-10 drop-shadow-md">
                     <h2 className="text-2xl font-bold leading-none" style={{ color: '#FFFFFF', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{selectedMovie.title}</h2>
                     <p className="text-sm font-bold tracking-wide mt-1" style={{ color: '#F5B041' }}>{selectedShowtime.format}</p>
                   </div>
@@ -225,7 +248,7 @@ export function Receipt() {
           position: 'fixed',
           left: '-9999px',
           top: '0',
-          width: '380px',
+          width: '384px',
           backgroundColor: '#000000',
           color: '#FFFFFF',
           borderRadius: '24px',
@@ -233,23 +256,29 @@ export function Receipt() {
           fontFamily: 'sans-serif', // Ensure standard font for PDF
         }}
       >
-        {/* Background Layer */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+        {/* Foto de fondo y degradado con las mismas medidas exactas que en pantalla. */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
           <img
             src={selectedMovie.poster}
-            alt="bg"
+            alt=""
             crossOrigin="anonymous"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.3 }}
           />
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)' }}></div>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 100%)' }}></div>
         </div>
 
         {/* Content Layer */}
         <div style={{ position: 'relative', zIndex: 10 }}>
 
-          {/* Header Image Area */}
-          <div style={{ position: 'relative', height: '192px', width: '100%' }}>
-            {/* Top Image Removed as requested by user - only keeping background */}
+          {/* Header Image Area: foto y degradado comparten contenedor y medidas. */}
+          <div style={{ position: 'relative', height: '192px', width: '100%', overflow: 'hidden' }}>
+            <img
+              src={selectedMovie.poster}
+              alt={selectedMovie.title}
+              crossOrigin="anonymous"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85) 100%)' }}></div>
 
             <div style={{ position: 'absolute', bottom: '16px', left: '24px', zIndex: 20, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
               <h2 style={{ fontSize: '24px', fontWeight: 'bold', lineHeight: '1', margin: 0, color: '#FFFFFF' }}>

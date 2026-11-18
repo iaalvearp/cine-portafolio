@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Snack de la dulcería">
+  <rect width="128" height="128" rx="20" fill="#111827" />
+  <circle cx="64" cy="60" r="40" fill="#F5B041" fill-opacity="0.12" />
+  <path d="M40 52h48l-6 52H46L40 52z" fill="#F5B041" />
+  <path d="M46 66h36l-1.5 12H47.5L46 66z" fill="#ffffff" fill-opacity="0.85" />
+  <circle cx="52" cy="44" r="10" fill="#FFE4A3" />
+  <circle cx="66" cy="38" r="11" fill="#FFD36E" />
+  <circle cx="80" cy="46" r="9" fill="#FFE4A3" />
+  <circle cx="60" cy="50" r="8" fill="#FFF3D6" />
+  <circle cx="74" cy="52" r="8" fill="#FFF3D6" />
+  <text x="64" y="118" text-anchor="middle" font-family="sans-serif" font-size="10" letter-spacing="2" fill="#9CA3AF">DULCERÍA</text>
+</svg>

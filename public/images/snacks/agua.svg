@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Agua mineral">
+  <rect width="128" height="128" rx="20" fill="#111827"/>
+  <circle cx="64" cy="60" r="44" fill="#F5B041" fill-opacity="0.12"/>
+  <path d="M55 26h18v10H55z" fill="#F5B041"/>
+  <path d="M52 36h24l6 12v48c0 6-4 10-10 10H56c-6 0-10-4-10-10V48l6-12z" fill="#9CA3AF" fill-opacity="0.35"/>
+  <path d="M48 56h32v42H48z" fill="#7DD3FC" fill-opacity="0.8"/>
+  <path d="M56 62h8v30h-8z" fill="#FFFFFF" fill-opacity="0.5"/>
+  <text x="64" y="120" text-anchor="middle" font-family="sans-serif" font-size="9" letter-spacing="1.5" fill="#9CA3AF">AGUA</text>
+</svg>

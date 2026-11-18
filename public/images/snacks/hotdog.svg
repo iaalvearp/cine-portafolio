@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Hot dog">
+  <rect width="128" height="128" rx="20" fill="#111827"/>
+  <circle cx="64" cy="60" r="44" fill="#F5B041" fill-opacity="0.12"/>
+  <path d="M22 70c0-14 18-24 42-24s42 10 42 24-18 24-42 24-42-10-42-24z" fill="#E59830"/>
+  <path d="M26 68c0-10 17-18 38-18s38 8 38 18-17 18-38 18-38-8-38-18z" fill="#FFE4A3"/>
+  <path d="M30 67h68c0 6-15 11-34 11s-34-5-34-11z" fill="#8B5A2B"/>
+  <path d="M34 64l6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6" fill="none" stroke="#F5B041" stroke-width="3"/>
+  <text x="64" y="120" text-anchor="middle" font-family="sans-serif" font-size="9" letter-spacing="1.5" fill="#9CA3AF">HOT DOG</text>
+</svg>

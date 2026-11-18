@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Bebida congelada ICEE">
+  <rect width="128" height="128" rx="20" fill="#111827"/>
+  <circle cx="64" cy="60" r="44" fill="#F5B041" fill-opacity="0.12"/>
+  <path d="M70 22l12 20" stroke="#F5B041" stroke-width="5" stroke-linecap="round"/>
+  <path d="M43 42h42l-5 66H48L43 42z" fill="#F5B041"/>
+  <path d="M47 52h34l-4 24H51l-4-24z" fill="#D83333" fill-opacity="0.85"/>
+  <circle cx="57" cy="58" r="4" fill="#FFFFFF" fill-opacity="0.6"/>
+  <circle cx="70" cy="66" r="5" fill="#FFFFFF" fill-opacity="0.5"/>
+  <circle cx="61" cy="72" r="3" fill="#FFFFFF" fill-opacity="0.7"/>
+  <path d="M41 37h46v8H41z" fill="#FFD36E"/>
+  <text x="64" y="120" text-anchor="middle" font-family="sans-serif" font-size="9" letter-spacing="1.5" fill="#9CA3AF">ICEE</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Barra de chocolate">
+  <rect width="128" height="128" rx="20" fill="#111827"/>
+  <circle cx="64" cy="60" r="44" fill="#F5B041" fill-opacity="0.12"/>
+  <path d="M32 38h64v56H32z" fill="#E59830"/>
+  <path d="M35 41h58v50H35z" fill="#8B5A2B"/>
+  <path d="M45 41v50M64 41v50M83 41v50M35 57h58M35 75h58" stroke="#F5B041" stroke-width="3"/>
+  <path d="M32 38h64v6H32z" fill="#F5B041" fill-opacity="0.6"/>
+  <text x="64" y="120" text-anchor="middle" font-family="sans-serif" font-size="9" letter-spacing="1.5" fill="#9CA3AF">CHOCOLATE</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Combo de palomitas y bebidas">
+  <rect width="128" height="128" rx="20" fill="#111827"/>
+  <circle cx="64" cy="60" r="44" fill="#F5B041" fill-opacity="0.12"/>
+  <circle cx="40" cy="47" r="8" fill="#FFF3D6"/>
+  <circle cx="53" cy="41" r="9" fill="#FFD36E"/>
+  <circle cx="64" cy="48" r="8" fill="#FFE4A3"/>
+  <path d="M34 54h38l-5 46H39L34 54z" fill="#F5B041"/>
+  <path d="M39 68h28l-1 9H40l-1-9z" fill="#FFFFFF" fill-opacity="0.9"/>
+  <path d="M80 50h13l-2 34H82L80 50z" fill="#FFD36E"/>
+  <path d="M96 54h11l-2 30H98L96 54z" fill="#FFE4A3"/>
+  <path d="M79 46h15v5H79z" fill="#FFFFFF" fill-opacity="0.8"/>
+  <path d="M95 50h13v5H95z" fill="#FFFFFF" fill-opacity="0.8"/>
+  <text x="64" y="120" text-anchor="middle" font-family="sans-serif" font-size="9" letter-spacing="1.5" fill="#9CA3AF">COMBO</text>
+</svg>

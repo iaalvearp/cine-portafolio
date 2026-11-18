@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Caramelos y gomitas">
+  <rect width="128" height="128" rx="20" fill="#111827"/>
+  <circle cx="64" cy="60" r="44" fill="#F5B041" fill-opacity="0.12"/>
+  <circle cx="47" cy="52" r="13" fill="#F5B041"/>
+  <circle cx="78" cy="45" r="11" fill="#D83333"/>
+  <circle cx="83" cy="72" r="12" fill="#FFD36E"/>
+  <path d="M40 65h14v14H40z" fill="#FFE4A3" transform="rotate(12 47 72)"/>
+  <path d="M55 82h14v12H55z" fill="#E59830" transform="rotate(-10 62 88)"/>
+  <circle cx="47" cy="52" r="5" fill="#FFFFFF" fill-opacity="0.45"/>
+  <text x="64" y="120" text-anchor="middle" font-family="sans-serif" font-size="9" letter-spacing="1.5" fill="#9CA3AF">DULCES</text>
+</svg>

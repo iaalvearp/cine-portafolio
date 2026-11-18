@@ -13,42 +13,42 @@ const SNACKS_DATA: Snack[] = [
         name: 'Combo Pareja',
         description: '2 Canguiles Medianos + 2 Bebidas Medianas',
         price: 15.50,
-        image: 'https://images.unsplash.com/photo-1585647347483-22b66260dfff?q=80&w=300&auto=format&fit=crop'
+        image: '/images/snacks/combo.svg'
     },
     {
         id: 'combo-2',
         name: 'Combo Personal',
         description: '1 Canguil Pequeño + 1 Bebida Pequeña + 1 Chocolate',
         price: 8.90,
-        image: 'https://images.unsplash.com/photo-1585647347384-2593bc35786b?q=80&w=300&auto=format&fit=crop'
+        image: '/images/snacks/combo.svg'
     },
     {
         id: 'snack-1',
         name: 'Hot Dog Deluxe',
         description: 'Con salsa de queso, tocino y papas hilo',
         price: 5.50,
-        image: 'https://images.unsplash.com/photo-1612392062631-94dd85fa2dd0?q=80&w=300&auto=format&fit=crop'
+        image: '/images/snacks/hotdog.svg'
     },
     {
         id: 'snack-2',
         name: 'Nachos con Queso',
         description: 'Totopos crujientes con salsa de queso cheddar y jalapeños',
         price: 6.25,
-        image: 'https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?q=80&w=300&auto=format&fit=crop'
+        image: '/images/snacks/nachos.svg'
     },
     {
         id: 'drink-1',
         name: 'Gaseosa Grande',
         description: 'Vaso de 32oz (Coca-Cola, Sprite, Fanta)',
         price: 4.00,
-        image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=300&auto=format&fit=crop'
+        image: '/images/snacks/bebida.svg'
     },
     {
         id: 'sweet-1',
         name: 'M&Ms',
         description: 'Paquete grande de chocolate confitado',
         price: 3.50,
-        image: 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?q=80&w=300&auto=format&fit=crop'
+        image: '/images/snacks/dulce.svg'
     }
 ];
 

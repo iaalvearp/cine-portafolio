@@ -27,11 +27,23 @@ interface CartItem {
   image: string
 }
 
+// Normaliza rutas relativas del backend sin descartarlas (antes caían al emoji).
+const normalizarImagen = (valor: string): string => {
+  const ruta = typeof valor === 'string' ? valor.trim() : '';
+  if (!ruta) return '';
+  if (/^https?:\/\//i.test(ruta) || ruta.startsWith('/')) return ruta;
+  return `/${ruta}`;
+};
+
 // Helper component for images with fallback
 const ImageWithFallback = ({ src, alt, fallback, className }: { src: string, alt: string, fallback: string, className?: string }) => {
   const [error, setError] = useState(false);
+  const imagen = normalizarImagen(src);
 
-  if (error || !src || (!src.startsWith('/') && !src.startsWith('http'))) {
+  // Si cambia el snack, se limpia un error anterior para que vuelva a intentarlo.
+  useEffect(() => { setError(false); }, [imagen]);
+
+  if (error || !imagen) {
     return (
       <div className={cn("flex items-center justify-center text-4xl w-full h-full bg-muted", className)}>
         {fallback}
@@ -41,9 +53,10 @@ const ImageWithFallback = ({ src, alt, fallback, className }: { src: string, alt
 
   return (
     <img
-      src={src}
+      src={imagen}
       alt={alt}
       className={className}
+      decoding="async"
       onError={() => setError(true)}
     />
   );

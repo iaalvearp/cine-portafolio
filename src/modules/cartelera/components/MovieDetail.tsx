@@ -16,7 +16,7 @@ import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { API_ENDPOINTS, buildUrl } from '@/config/api';
 import { apiFetch } from '@/lib/localApi';
-import { tomarOrigen } from '../lib/transicionPoster';
+import { tomarOrigen, prepararRegreso, reproducirRegreso } from '../lib/transicionPoster';
 
 interface BackendShowtime {
   id: number;
@@ -258,14 +258,55 @@ export function MovieDetail() {
           <Button
             className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-2 text-white backdrop-blur"
             onClick={() => {
-              if (document.startViewTransition) {
-                document.startViewTransition(() => {
-                  flushSync(() => {
-                    setSelectedMovie(null);
-                  });
+              // Regreso inverso: el póster grande viaja hasta su miniatura en la cartelera.
+              const pelicula = selectedMovie.id;
+              const marco = marcoRef.current;
+              const caja = marco?.getBoundingClientRect();
+              const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              const origen =
+                marco && caja && caja.width > 0 && caja.height > 0 && !reducido
+                  ? { left: caja.left, top: caja.top, width: caja.width, height: caja.height }
+                  : null;
+
+              const salir = () => {
+                flushSync(() => {
+                  setSelectedMovie(null);
                 });
-              } else {
-                setSelectedMovie(null);
+              };
+
+              // Sin animación posible: se vuelve a la cartelera tal cual.
+              if (!origen) {
+                salir();
+                return;
+              }
+
+              const viajar = () => {
+                try {
+                  reproducirRegreso();
+                } catch {
+                  /* nada que reproducir */
+                }
+              };
+
+              if (!document.startViewTransition) {
+                salir();
+                prepararRegreso(pelicula, marco, origen);
+                viajar();
+                return;
+              }
+
+              try {
+                const transicion = document.startViewTransition(() => {
+                  salir();
+                  prepararRegreso(pelicula, marco, origen);
+                });
+                // Se inicia al terminar (o al salto) el fundido: así no hay salto de fotograma.
+                transicion.finished.then(viajar, viajar);
+              } catch {
+                // Sin transición disponible: se vuelve y se anima directamente.
+                salir();
+                prepararRegreso(pelicula, marco, origen);
+                viajar();
               }
             }}
           >

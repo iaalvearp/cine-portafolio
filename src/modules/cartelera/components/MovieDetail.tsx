@@ -159,7 +159,7 @@ export function MovieDetail() {
     }
   };
 
-  const sinBannerPropio = selectedMovie.backdrop === selectedMovie.poster;
+  const sinBannerPropio = selectedMovie.fondo === selectedMovie.poster;
 
   return (
     <div className="min-h-screen bg-background">

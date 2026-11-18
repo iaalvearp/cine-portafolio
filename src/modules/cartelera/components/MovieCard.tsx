@@ -15,14 +15,14 @@ interface MovieCardProps {
 // La animación de entrada solo se reproduce la primera vez que aparece cada película.
 const peliculasYaVistas = new Set<string>();
 
-// Precarga del backdrop al hover o touchstart, una sola vez por película.
-const backdropsPrecargados = new Set<string>();
+// Precarga del fondo al hover o touchstart, una sola vez por película.
+const fondosPrecargados = new Set<string>();
 
-const precargarBackdrop = (movie: Movie) => {
-  if (!movie.backdrop || backdropsPrecargados.has(movie.id)) return;
-  backdropsPrecargados.add(movie.id);
+const precargarFondo = (movie: Movie) => {
+  if (!movie.fondo || fondosPrecargados.has(movie.id)) return;
+  fondosPrecargados.add(movie.id);
   const imagen = new Image();
-  imagen.src = movie.backdrop;
+  imagen.src = movie.fondo;
 };
 
 export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProps) {
@@ -37,8 +37,8 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
     <div
       className={cn('group relative', primeraAparicion && 'animate-fade-in')}
       style={{ animationDelay: `${index * 100}ms` }}
-      onMouseEnter={() => precargarBackdrop(movie)}
-      onTouchStart={() => precargarBackdrop(movie)}
+      onMouseEnter={() => precargarFondo(movie)}
+      onTouchStart={() => precargarFondo(movie)}
     >
       <div className="relative overflow-hidden rounded-xl bg-card border border-border/50 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
         {/* Poster */}

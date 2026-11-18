@@ -15,7 +15,7 @@ interface HeroMediaProps {
  * contenedor relative/overflow-hidden con position:absolute; inset:0.
  */
 export function HeroMedia({ movie }: HeroMediaProps) {
-  const sinBannerPropio = movie.backdrop === movie.poster;
+  const sinBannerPropio = movie.fondo === movie.poster;
   const [cargada, setCargada] = useState(() => heroesYaAnimados.has(movie.id));
 
   const marcarCargada = () => {
@@ -39,7 +39,7 @@ export function HeroMedia({ movie }: HeroMediaProps) {
       {/* Imagen grande: crossfade desde la portada al terminar de cargar. */}
       {!sinBannerPropio && (
         <img
-          src={movie.backdrop}
+          src={movie.fondo}
           alt={movie.title}
           fetchPriority="high"
           decoding="async"

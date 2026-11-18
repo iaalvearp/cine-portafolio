@@ -14,6 +14,7 @@ interface BackendMovie {
     rating: string;
     poster: string;
     backdrop: string;
+    fondo?: string;
     genre: string[];
     cast: string[];
     formats: string[];
@@ -38,11 +39,18 @@ const adaptMovie = (backendMovie: BackendMovie): Movie => {
         backdropPath = `/${backdropPath}`;
     }
 
+    // Si el backend aún no envía `fondo`, se usa la propia portada como respaldo.
+    let fondoPath = backendMovie.fondo || posterPath;
+    if (fondoPath && !fondoPath.startsWith('http') && !fondoPath.startsWith('/')) {
+        fondoPath = `/${fondoPath}`;
+    }
+
     return {
         id: String(backendMovie.id),
         title: backendMovie.title,
         poster: posterPath,
         backdrop: backdropPath,
+        fondo: fondoPath,
         duration: backendMovie.duration,
         rating: backendMovie.rating,
         genre: backendMovie.genre,
@@ -61,6 +69,8 @@ const leerCache = (): Movie[] | null => {
         const guardado = window.sessionStorage.getItem(CLAVE_CACHE);
         if (!guardado) return null;
         const datos = JSON.parse(guardado);
+        // Descartar cachés anteriores al campo `fondo` para volver a pedir los datos.
+        if (Array.isArray(datos) && datos.length > 0 && !('fondo' in datos[0])) return null;
         return Array.isArray(datos) ? datos as Movie[] : null;
     } catch {
         return null;

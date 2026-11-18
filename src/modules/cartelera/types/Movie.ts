@@ -4,6 +4,7 @@ export interface Movie {
     originalTitle?: string;
     poster: string;
     backdrop: string;
+    fondo: string;
     duration: string;
     rating: string;
     genre: string[];

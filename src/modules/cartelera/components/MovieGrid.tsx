@@ -6,8 +6,31 @@ import { Clock, MapPin, Loader2, AlertCircle } from "lucide-react"
 import { movieService } from "../services/movieService"
 import type { Movie } from "../types/Movie"
 
+const CLAVE_TAB = "cine_tab_cartelera"
+const TABS_VALIDAS = ["cartelera", "estrenos", "horarios"]
+
+const leerTabGuardada = () => {
+  try {
+    const guardada = window.sessionStorage.getItem(CLAVE_TAB)
+    if (guardada && TABS_VALIDAS.includes(guardada)) {
+      return guardada
+    }
+  } catch {
+    // sessionStorage no disponible: se mantiene el valor por defecto.
+  }
+  return "cartelera"
+}
+
+const guardarTab = (tab: string) => {
+  try {
+    window.sessionStorage.setItem(CLAVE_TAB, tab)
+  } catch {
+    // No se puede persistir: la pestaña sigue funcionando en memoria.
+  }
+}
+
 export function MovieGrid(props: any) {
-  const [activeTab, setActiveTab] = useState("cartelera")
+  const [activeTab, setActiveTab] = useState(leerTabGuardada)
   const [movies, setMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,7 +106,14 @@ export function MovieGrid(props: any) {
   return (
     <section className="py-8 md:py-12">
       <div className="container mx-auto px-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(valor) => {
+            guardarTab(valor)
+            setActiveTab(valor)
+          }}
+          className="w-full"
+        >
           <TabsList className="w-full max-w-2xl mx-auto mb-8 bg-muted/50 p-1 rounded-lg">
             <TabsTrigger
               value="cartelera"

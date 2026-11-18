@@ -14,6 +14,8 @@ import { useBooking } from '@/modules/booking/context/BookingContext';
 import { cn } from '@/lib/utils';
 import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { API_ENDPOINTS, buildUrl } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 interface BackendShowtime {
   id: number;
@@ -49,7 +51,7 @@ export function MovieDetail() {
     const fetchShowtimes = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`http://localhost:8080/api/funciones?peliculaId=${selectedMovie.id}`);
+        const res = await apiFetch(buildUrl(API_ENDPOINTS.FUNCIONES, { peliculaId: selectedMovie.id }));
         if (res.ok) {
           const data = await res.json();
           setFunciones(Array.isArray(data) ? data : []);

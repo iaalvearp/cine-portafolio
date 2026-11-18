@@ -1,3 +1,6 @@
+import { API_ENDPOINTS } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
+
 export interface Promocion {
     id: number;
     titulo: string;
@@ -6,8 +9,6 @@ export interface Promocion {
     descuento?: string;
     codigo?: string;
 }
-
-const API_URL = '/api/promociones';
 
 interface BackendPromocion {
     id: number;
@@ -20,7 +21,7 @@ interface BackendPromocion {
 
 export const getPromociones = async (): Promise<Promocion[]> => {
     try {
-        const response = await fetch(API_URL);
+        const response = await apiFetch(API_ENDPOINTS.PROMOCIONES);
         if (!response.ok) {
             throw new Error('Error fetching promociones');
         }

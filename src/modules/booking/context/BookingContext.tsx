@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, type ReactNode, useEffect }
 import type { Movie, Showtime, TicketType } from '@/data/mockData';
 import type { Promocion } from '@/modules/marketing/services/promocionesService';
 import { toast } from 'sonner';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 export interface Snack {
   id: string;
@@ -105,7 +107,7 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await apiFetch(API_ENDPOINTS.AUTH_LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -154,7 +156,7 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
         total: getTotal()
       };
 
-      const response = await fetch('http://localhost:8080/api/reservas', {
+      const response = await apiFetch(API_ENDPOINTS.RESERVAS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

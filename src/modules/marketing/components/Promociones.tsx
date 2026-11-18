@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { Badge } from '@/shared/components/ui/badge';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { type Promocion } from '@/modules/marketing/services/promocionesService';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 export function Promociones() {
   const { setStep, setSelectedPromotion } = useBooking();
@@ -15,7 +17,7 @@ export function Promociones() {
     const fetchPromociones = async () => {
       console.log("Fetching promociones...");
       try {
-        const response = await fetch('http://localhost:8080/api/promociones');
+        const response = await apiFetch(API_ENDPOINTS.PROMOCIONES);
         if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
         const data = await response.json();
         console.log("Promociones data:", data);

@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8080/api';
+import { API_ENDPOINTS, buildUrl } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 export interface City {
     id: string;
@@ -14,7 +15,7 @@ export interface Cinema {
 
 export const getCities = async (): Promise<City[]> => {
     try {
-        const response = await fetch(`${API_URL}/cities`);
+        const response = await apiFetch(API_ENDPOINTS.CITIES);
         if (!response.ok) {
             throw new Error('Error fetching cities');
         }
@@ -31,27 +32,18 @@ export const getCities = async (): Promise<City[]> => {
 
 export const getCinemas = async (cityId?: string): Promise<Cinema[]> => {
     try {
-        // Fetch all cinemas or filter by city if the API supported it
-        // Based on user input, we get the list and can filter client side or just return all
-        // The header component handles filtering
-        const response = await fetch(`${API_URL}/cinemas`);
+        const response = await apiFetch(buildUrl(API_ENDPOINTS.CINEMAS, cityId ? { city: cityId } : undefined));
         if (!response.ok) {
             throw new Error('Error fetching cinemas');
         }
         const data = await response.json();
 
-        const mappedCinemas = data.map((cinema: any) => ({
+        return data.map((cinema: any) => ({
             id: cinema.id.toString(),
             name: cinema.name,
             cityId: cinema.cityId,
             address: cinema.address,
         }));
-
-        if (cityId) {
-            return mappedCinemas.filter((c: Cinema) => c.cityId === cityId);
-        }
-
-        return mappedCinemas;
     } catch (error) {
         console.error('Error fetching cinemas:', error);
         return [];

@@ -3,6 +3,8 @@ import { Gift, Star, Ticket, Users, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { type Beneficio } from '@/modules/marketing/services/beneficiosService';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 export function Beneficios() {
   const { setStep } = useBooking();
@@ -13,7 +15,7 @@ export function Beneficios() {
     const fetchBeneficios = async () => {
       console.log("Fetching beneficios...");
       try {
-        const response = await fetch('http://localhost:8080/api/beneficios');
+        const response = await apiFetch(API_ENDPOINTS.BENEFICIOS);
         if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
         const data = await response.json();
         console.log("Beneficios data:", data);

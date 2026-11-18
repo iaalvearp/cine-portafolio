@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui
 import { useBooking } from "@/modules/booking/context/BookingContext"
 // Removed Snack import to use local definition avoiding conflicts
 import { cn } from "@/lib/utils"
+import { API_ENDPOINTS } from "@/config/api"
+import { apiFetch } from "@/lib/localApi"
 
 // Local interface to ensure it matches API expectation
 interface Snack {
@@ -56,7 +58,7 @@ export function Dulceria() {
 
   useEffect(() => {
     console.log("Fetching snacks from API...");
-    fetch('http://localhost:8080/api/snacks')
+    apiFetch(API_ENDPOINTS.SNACKS)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
@@ -64,7 +66,7 @@ export function Dulceria() {
       .then(data => {
         console.log("Snacks loaded from API:", data);
         if (Array.isArray(data)) {
-          setSnacks(data);
+          setSnacks(data.map((snack: any) => ({ ...snack, id: String(snack.id) })));
         } else {
           console.warn("API returned non-array data:", data);
           setSnacks([]);

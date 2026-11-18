@@ -3,6 +3,8 @@ import { ArrowLeft, MapPin, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { cn } from '@/lib/utils';
+import { API_ENDPOINTS, buildUrl } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 // --- ICONS ---
 
@@ -54,7 +56,7 @@ export function SeatSelector() {
 
     const fetchOccupiedSeats = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/reservas?funcionId=${selectedShowtime.id}`);
+        const response = await apiFetch(buildUrl(API_ENDPOINTS.RESERVAS, { funcionId: selectedShowtime.id }));
         if (response.ok) {
           const reservations = await response.json();
           // Assuming reservations is an array of objects with a 'seats' property (string[])

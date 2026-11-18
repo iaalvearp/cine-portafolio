@@ -1,11 +1,11 @@
 import type { User } from '../types/User';
-
-const API_URL = 'http://localhost:8080/api/usuarios';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
 
 export const userService = {
     getAll: async (): Promise<User[]> => {
         try {
-            const response = await fetch(API_URL);
+            const response = await apiFetch(API_ENDPOINTS.USUARIOS);
             if (!response.ok) throw new Error('Error al obtener usuarios');
             return await response.json();
         } catch (error) {
@@ -16,7 +16,7 @@ export const userService = {
 
     getById: async (id: number): Promise<User> => {
         try {
-            const response = await fetch(`${API_URL}/${id}`);
+            const response = await apiFetch(`${API_ENDPOINTS.USUARIOS}/${id}`);
             if (!response.ok) throw new Error('Error al obtener usuario');
             return await response.json();
         } catch (error) {
@@ -27,12 +27,15 @@ export const userService = {
 
     create: async (user: User): Promise<User> => {
         try {
-            const response = await fetch(API_URL, {
+            const response = await apiFetch(API_ENDPOINTS.USUARIOS, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(user),
             });
-            if (!response.ok) throw new Error('Error al crear usuario');
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.mensaje || 'Error al crear usuario');
+            }
             return await response.json();
         } catch (error) {
             console.error('Error in create:', error);
@@ -42,12 +45,15 @@ export const userService = {
 
     update: async (id: number, user: Partial<User>): Promise<User> => {
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await apiFetch(`${API_ENDPOINTS.USUARIOS}/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(user),
             });
-            if (!response.ok) throw new Error('Error al actualizar usuario');
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.mensaje || 'Error al actualizar usuario');
+            }
             return await response.json();
         } catch (error) {
             console.error('Error in update:', error);
@@ -57,10 +63,13 @@ export const userService = {
 
     delete: async (id: number): Promise<void> => {
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await apiFetch(`${API_ENDPOINTS.USUARIOS}/${id}`, {
                 method: 'DELETE',
             });
-            if (!response.ok) throw new Error('Error al eliminar usuario');
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.mensaje || 'Error al eliminar usuario');
+            }
         } catch (error) {
             console.error('Error in delete:', error);
             throw error;

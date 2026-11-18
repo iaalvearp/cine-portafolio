@@ -1,11 +1,12 @@
+import { API_ENDPOINTS } from '@/config/api';
+import { apiFetch } from '@/lib/localApi';
+
 export interface Beneficio {
     id: number;
     titulo: string;
     descripcion: string;
     imagen: string; // URL relativa o absoluta
 }
-
-const API_URL = '/api/beneficios';
 
 interface BackendBeneficio {
     id: number;
@@ -17,7 +18,7 @@ interface BackendBeneficio {
 
 export const getBeneficios = async (): Promise<Beneficio[]> => {
     try {
-        const response = await fetch(API_URL);
+        const response = await apiFetch(API_ENDPOINTS.BENEFICIOS);
         if (!response.ok) {
             throw new Error('Error fetching beneficios');
         }

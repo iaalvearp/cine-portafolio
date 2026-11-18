@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8080/api';
+export const API_BASE_URL = '/api';
 
 export const API_ENDPOINTS = {
     // Películas
@@ -21,6 +21,11 @@ export const API_ENDPOINTS = {
     // Marketing
     BENEFICIOS: `${API_BASE_URL}/beneficios`,
     PROMOCIONES: `${API_BASE_URL}/promociones`,
+
+    // Catálogos
+    FORMATOS: `${API_BASE_URL}/formatos`,
+    GENEROS: `${API_BASE_URL}/generos`,
+    RESERVAS: `${API_BASE_URL}/reservas`,
 
     // Auth
     AUTH_LOGIN: `${API_BASE_URL}/auth/login`,

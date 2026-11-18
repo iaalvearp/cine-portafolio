@@ -2,20 +2,28 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Edit2, Save } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
-import { movieService } from '@/modules/cartelera/services/movieService';
+import { getMoviesCache, movieService } from '@/modules/cartelera/services/movieService';
 import type { Movie } from '@/modules/cartelera/types/Movie';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { cn } from '@/lib/utils';
 
+// Copia ordenada sin mutar el arreglo compartido por la caché.
+const prepararHero = (peliculas: Movie[] | null): Movie[] =>
+  peliculas ? [...peliculas].sort((a, b) => Number(a.id) - Number(b.id)).slice(0, 5) : [];
+
 export function HeroCarousel(props: any) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [movies, setMovies] = useState<Movie[]>(() => prepararHero(getMoviesCache()));
+  const [loading, setLoading] = useState(() => movies.length === 0);
   const { setSelectedMovie, user } = useBooking();
   const [editMode, setEditMode] = useState<string | null>(null); // ID of movie being edited
   const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
+    // Si la caché ya nos dio películas, no pedimos nada ni tocamos el estado.
+    if (movies.length > 0) return;
+
+    let activo = true;
     const fetchMovies = async () => {
       try {
         const data = await movieService.getMovies();
@@ -23,15 +31,15 @@ export function HeroCarousel(props: any) {
         // The user specifically asked to "ordena según la indicación que te paso aquí" which implies a specific order or just ensuring it matches the list provided.
         // Since the list provided is just a list of new Pelicula(), we assume the backend returns them in that order or we should respect the backend order.
         // However, let's just take the data as is, but if we need to be safe, we can sort by ID.
-        const sortedData = data.sort((a, b) => Number(a.id) - Number(b.id));
-        setMovies(sortedData.slice(0, 5));
+        if (activo) setMovies(prepararHero(data));
       } catch (error) {
         console.error('Failed to load movies for carousel', error);
       } finally {
-        setLoading(false);
+        if (activo) setLoading(false);
       }
     };
     fetchMovies();
+    return () => { activo = false; };
   }, []);
 
   useEffect(() => {

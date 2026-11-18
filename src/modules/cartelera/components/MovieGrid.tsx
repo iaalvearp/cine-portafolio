@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { MovieCard } from "./MovieCard"
 // import { movies as mockMovies } from "@/data/mockData" // Comentado para usar datos reales
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs"
 import { Clock, MapPin, Loader2, AlertCircle } from "lucide-react"
-import { movieService } from "../services/movieService"
+import { getMoviesCache, movieService } from "../services/movieService"
 import type { Movie } from "../types/Movie"
 
 const CLAVE_TAB = "cine_tab_cartelera"
@@ -29,55 +29,63 @@ const guardarTab = (tab: string) => {
   }
 }
 
+const SHOWTIMES = [
+  { time: "2:30 PM", available: 45, format: "2D" },
+  { time: "5:15 PM", available: 12, format: "3D" },
+  { time: "8:00 PM", available: 78, format: "2D" },
+  { time: "10:45 PM", available: 23, format: "3D" },
+]
+
+// El seed calcula estrenos relativos a hoy: usa la fecha cuando esté disponible
+// y la bandera preSale solo como respaldo, para que ninguna película quede oculta.
+const esEstreno = (movie: Movie) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(movie.releaseDate)) {
+    return new Date(`${movie.releaseDate}T00:00:00`).getTime() > Date.now();
+  }
+  return Boolean(movie.isPreSale);
+}
+
 export function MovieGrid(props: any) {
   const [activeTab, setActiveTab] = useState(leerTabGuardada)
-  const [movies, setMovies] = useState<Movie[]>([])
-  const [loading, setLoading] = useState(true)
+  //Valor inicial síncrono: si ya hay caché, se pinta de inmediato sin estado vacío.
+  const [movies, setMovies] = useState<Movie[]>(() => getMoviesCache() ?? [])
+  const [loading, setLoading] = useState(() => movies.length === 0)
   const [error, setError] = useState<string | null>(null)
 
-  const [selectedMovie, setSelectedMovie] = useState("")
+  const [selectedMovie, setSelectedMovie] = useState(() => movies[0]?.id ?? "")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
 
   useEffect(() => {
+    // Con datos en caché no volvemos a pedir ni a actualizar el estado.
+    if (movies.length > 0) return
+
+    let activo = true
     const fetchMovies = async () => {
       try {
-        setLoading(true)
         const data = await movieService.getMovies()
+        if (!activo) return
         setMovies(data)
         if (data.length > 0) {
           setSelectedMovie(data[0].id)
         }
       } catch (err) {
         console.error("Failed to fetch movies:", err)
-        setError("No se pudieron cargar las películas. Por favor intenta más tarde.")
+        if (activo) {
+          setError("No se pudieron cargar las películas. Por favor intenta más tarde.")
+        }
         // Fallback to mock data if needed, or just show error
         // setMovies(mockMovies) 
       } finally {
-        setLoading(false)
+        if (activo) setLoading(false)
       }
     }
 
     fetchMovies()
+    return () => { activo = false }
   }, [])
 
-  const showtimes = [
-    { time: "2:30 PM", available: 45, format: "2D" },
-    { time: "5:15 PM", available: 12, format: "3D" },
-    { time: "8:00 PM", available: 78, format: "2D" },
-    { time: "10:45 PM", available: 23, format: "3D" },
-  ]
-
-  // El seed calcula estrenos relativos a hoy: usa la fecha cuando esté disponible
-  // y la bandera preSale solo como respaldo, para que ninguna película quede oculta.
-  const esEstreno = (movie: Movie) => {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(movie.releaseDate)) {
-      return new Date(`${movie.releaseDate}T00:00:00`).getTime() > Date.now();
-    }
-    return Boolean(movie.isPreSale);
-  }
-
-  const enCartelera = movies.filter(movie => !esEstreno(movie))
-  const proximosEstrenos = movies.filter(esEstreno)
+  const enCartelera = useMemo(() => movies.filter(movie => !esEstreno(movie)), [movies])
+  const proximosEstrenos = useMemo(() => movies.filter(esEstreno), [movies])
 
   if (loading) {
     return (
@@ -242,7 +250,7 @@ export function MovieGrid(props: any) {
 
                 {/* Showtimes */}
                 <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
-                  {showtimes.map((showtime, idx) => (
+                  {SHOWTIMES.map((showtime, idx) => (
                     <button
                       key={idx}
                       className="relative p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all group"

@@ -1,3 +1,4 @@
+import { memo, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { flushSync } from 'react-dom';
 import { Button } from '@/shared/components/ui/button';
@@ -11,12 +12,20 @@ interface MovieCardProps {
   index: number;
 }
 
-export function MovieCard({ movie, index }: MovieCardProps) {
+// La animación de entrada solo se reproduce la primera vez que aparece cada película.
+const peliculasYaVistas = new Set<string>();
+
+export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProps) {
   const { setSelectedMovie } = useBooking();
+  const [primeraAparicion] = useState(() => {
+    const esNueva = !peliculasYaVistas.has(movie.id);
+    peliculasYaVistas.add(movie.id);
+    return esNueva;
+  });
 
   return (
     <div
-      className="group relative animate-fade-in"
+      className={cn('group relative', primeraAparicion && 'animate-fade-in')}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative overflow-hidden rounded-xl bg-card border border-border/50 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
@@ -25,6 +34,10 @@ export function MovieCard({ movie, index }: MovieCardProps) {
           <img
             src={movie.poster}
             alt={movie.title}
+            width={400}
+            height={600}
+            decoding="async"
+            loading={index < 6 ? 'eager' : 'lazy'}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             style={{ viewTransitionName: `movie-poster-${movie.id}` } as React.CSSProperties}
           />
@@ -105,4 +118,4 @@ export function MovieCard({ movie, index }: MovieCardProps) {
       </Button>
     </div>
   );
-}
+});

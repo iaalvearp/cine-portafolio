@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { useBooking } from '@/modules/booking/context/BookingContext';
-import { HeroMedia } from './HeroMedia';
 import { cn } from '@/lib/utils';
 import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -44,6 +43,19 @@ export function MovieDetail() {
 
   const [funciones, setFunciones] = useState<BackendShowtime[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // El hero elige imagen nítida o ambiente desenfocado según las medidas del fondo.
+  const [orient, setOrient] = useState<'cargando' | 'ancho' | 'vertical'>('cargando');
+  useEffect(() => {
+    if (!selectedMovie) return;
+    setOrient('cargando');
+    const im = new Image();
+    const medir = () => setOrient(im.naturalWidth >= 1200 && im.naturalWidth / im.naturalHeight >= 1.4 ? 'ancho' : 'vertical');
+    im.onload = medir;
+    im.onerror = () => setOrient('vertical');
+    im.src = selectedMovie.fondo;
+    if (im.complete && im.naturalWidth) medir();
+  }, [selectedMovie?.fondo]);
 
   if (!selectedMovie) return null;
 
@@ -159,19 +171,47 @@ export function MovieDetail() {
     }
   };
 
-  const sinBannerPropio = selectedMovie.fondo === selectedMovie.poster;
+  const fondoActual = selectedMovie.fondo;
+  const anio = String(selectedMovie.releaseDate).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Bloque superior full-bleed con la imagen grande y sus capas. */}
-      <div className="relative w-full h-[55vh] lg:h-[70vh] min-h-[380px] overflow-hidden">
-        <HeroMedia key={selectedMovie.id} movie={selectedMovie} />
+      {/* Hero del detalle: una sola capa de imagen recortada desde arriba. */}
+      <section
+        className="relative w-full overflow-hidden min-h-[520px] h-[72vh] max-h-[780px] mt-0 pt-0"
+        style={{ background: '#0b0d12' }}
+      >
+        {/* Capa 1: imagen (nítida si es ancha, ambiente desenfocada si es vertical). */}
+        <img
+          src={fondoActual}
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-700 ${orient === 'cargando' ? 'opacity-0' : 'opacity-100'}`}
+          style={{
+            objectPosition: 'center top',
+            ...(orient === 'vertical'
+              ? { filter: 'blur(26px) brightness(0.5) saturate(1.2)', transform: 'scale(1.15)' }
+              : {}),
+          }}
+        />
 
-        {/* Back Button */}
-        <div className="absolute top-4 left-4 z-30">
+        {/* Capa 2: degradado inferior que termina en el color de fondo de la página. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background)) 8%, rgba(0,0,0,0) 62%)' }}
+        />
+
+        {/* Capa 3: oscurecido lateral para legibilidad. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: orient === 'ancho' ? 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 45%, rgba(0,0,0,0) 75%)' : 'rgba(0,0,0,0.25)' }}
+        />
+
+        {/* Capa 4: botón Regresar. */}
+        <div className="absolute top-6 left-6 z-20">
           <Button
-            variant="ghost"
-            className="text-white/90 hover:text-white hover:bg-white/10 gap-2"
+            className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-2 text-white backdrop-blur"
             onClick={() => {
               if (document.startViewTransition) {
                 document.startViewTransition(() => {
@@ -189,34 +229,14 @@ export function MovieDetail() {
           </Button>
         </div>
 
-        {/* Texto sobre la imagen */}
-        <div className="relative z-20 container mx-auto px-4 h-full flex items-end pb-16">
-          <div className="max-w-2xl space-y-3" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>
-            {selectedMovie.isPreSale && (
-              <Badge className="bg-destructive text-destructive-foreground">
-                Pre-venta
-              </Badge>
-            )}
-            <h1 className="text-3xl md:text-5xl font-bold text-white">
-              {selectedMovie.title}
-            </h1>
-            <div className="flex items-center gap-2 text-sm text-white/90">
-              <Clock className="w-4 h-4" />
-              <span>{selectedMovie.duration}</span>
-              <span>•</span>
-              <span>{selectedMovie.format.join(', ')}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sin banner propio: portada nítida flotante sobre el fondo ambiental. */}
-        {sinBannerPropio && (
-          <div className="absolute right-6 bottom-10 z-20 hidden sm:block">
-            <div className="relative w-40 md:w-52 rounded-lg overflow-hidden border-2 border-primary/30 shadow-2xl shadow-black/60">
+        {/* Capa 5: portada (solo vertical) y datos de la película. */}
+        <div className="relative z-10 flex h-full items-end gap-6 md:gap-10 px-6 md:px-10 pb-10 mx-auto w-full max-w-7xl">
+          {orient === 'vertical' && (
+            <div className="relative hidden sm:block shrink-0 w-40 md:w-52 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/15">
               <img
                 src={selectedMovie.poster}
                 alt={selectedMovie.title}
-                className="w-full aspect-2/3 object-cover"
+                className="w-full h-full object-cover"
                 style={{ viewTransitionName: `movie-poster-${selectedMovie.id}` } as React.CSSProperties}
               />
               {selectedMovie.rating && (
@@ -225,34 +245,47 @@ export function MovieDetail() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      <div className="relative z-10">
+          <div className="flex flex-col gap-3 max-w-2xl">
+            {selectedMovie.isPreSale && (
+              <Badge className="bg-destructive text-destructive-foreground w-max">
+                Pre-venta
+              </Badge>
+            )}
+            <h1
+              className="text-3xl md:text-5xl font-extrabold leading-tight text-white"
+              style={{ textShadow: '0 2px 14px rgba(0,0,0,0.75)' }}
+            >
+              {selectedMovie.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
+              {selectedMovie.rating && (
+                <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{selectedMovie.rating}</span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                <Clock className="w-4 h-4" />
+                {selectedMovie.duration}
+              </span>
+              <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{anio}</span>
+              {selectedMovie.genre.map((g: string) => (
+                <span key={g} className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{g}</span>
+              ))}
+              {selectedMovie.format.map((f: string) => (
+                <span key={f} className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{f}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="relative z-10 pt-8">
         {/* Content - 50/50 TWO COLUMNS */}
         <div className="container mx-auto px-4 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
 
             {/* LEFT COLUMN - 50% - Movie Info */}
             <div className="space-y-4">
-              {/* Poster: en el hero queda flotante si la película no tiene banner propio. */}
-              {!sinBannerPropio && (
-                <div className="relative rounded-lg overflow-hidden border-2 border-primary/30 shadow-xl max-w-sm">
-                  <img
-                    src={selectedMovie.poster}
-                    alt={selectedMovie.title}
-                    className="w-full aspect-2/3 object-cover"
-                    style={{ viewTransitionName: `movie-poster-${selectedMovie.id}` } as React.CSSProperties}
-                  />
-                  {selectedMovie.rating && (
-                    <div className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold">
-                      {selectedMovie.rating}
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Ver Trailer Button - YELLOW BACKGROUND, BLACK TEXT */}
               <Button
                 className="w-max text-black font-bold gap-2 border-none hover:opacity-90 transition-opacity"

@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, type ReactNode, useEffect, useRef } from 'react';
 import type { Movie, Showtime, TicketType } from '@/data/mockData';
 import type { Promocion } from '@/modules/marketing/services/promocionesService';
 import { toast } from 'sonner';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, buildUrl } from '@/config/api';
 import { apiFetch } from '@/lib/localApi';
 import { usuarioInvitado } from '@/data/seed/usuarioInvitado';
 
@@ -31,11 +31,23 @@ export interface SelectedSeat {
   price: number;
 }
 
+interface ReceiptSnapshot {
+  movie: Movie;
+  showtime: Showtime;
+  date: string;
+  cinema: string;
+  seats: SelectedSeat[];
+  snacks: SelectedSnack[];
+  tickets: SelectedTicket[];
+}
+
 interface ReservaGuardada {
   id: number;
   seats: string[];
   total: number;
   bookingDate: string;
+  // Instantánea local del ticket: el estado transitorio se limpia al confirmar.
+  receipt?: ReceiptSnapshot;
   [key: string]: any;
 }
 
@@ -89,6 +101,7 @@ interface BookingContextType extends BookingState {
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export function BookingProvider({ children, initialStep = 'cartelera' }: { children: ReactNode; initialStep?: BookingState['step'] }) {
+  const confirmandoRef = useRef(false);
   const [state, setState] = useState<BookingState>({
     selectedMovie: null,
     selectedDate: new Date(),
@@ -220,18 +233,51 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
   };
 
   const confirmBooking = async (): Promise<boolean> => {
+    // Evita un doble POST si el usuario pulsa "PAGAR AHORA" dos veces.
+    if (confirmandoRef.current) return false;
+
+    if (!state.selectedMovie || !state.selectedShowtime || state.selectedSeats.length === 0) {
+      toast.error("Información de compra incompleta");
+      return false;
+    }
+
+    confirmandoRef.current = true;
     try {
-      if (!state.selectedShowtime) {
-        toast.error("Información de función faltante");
-        return false;
+      const seats = state.selectedSeats.map(s => `${s.row}${s.number}`);
+
+      // La persistencia compartida de la demo es localStorage (cine_reservas).
+      // Reutilizamos la API local para no ocupar dos veces un mismo asiento.
+      const consulta = await apiFetch(buildUrl(API_ENDPOINTS.RESERVAS, {
+        funcionId: String(state.selectedShowtime.id),
+      }));
+      if (consulta.ok) {
+        const reservasExistentes = await consulta.json().catch(() => []) as Array<{ seats?: string[] }>;
+        const ocupados = new Set(
+          (Array.isArray(reservasExistentes) ? reservasExistentes : [])
+            .flatMap(reserva => Array.isArray(reserva.seats) ? reserva.seats : [])
+        );
+        if (seats.some(seat => ocupados.has(seat))) {
+          toast.error("Uno de los asientos seleccionados ya está ocupado");
+          return false;
+        }
       }
+
+      const receipt: ReceiptSnapshot = {
+        movie: state.selectedMovie,
+        showtime: state.selectedShowtime,
+        date: (state.selectedDate instanceof Date ? state.selectedDate : new Date(state.selectedDate)).toISOString(),
+        cinema: state.cinema,
+        seats: state.selectedSeats,
+        snacks: state.selectedSnacks,
+        tickets: state.selectedTickets,
+      };
 
       // Generate payload for Java backend
       // Fallback to ID 1 (Consumidor Final or System Default) if no user logged in
       const payload = {
         usuario: { id: state.user?.id || 1 },
         funcion: { id: state.selectedShowtime.id },
-        seats: state.selectedSeats.map(s => `${s.row}${s.number}`),
+        seats,
         total: getTotal()
       };
 
@@ -247,12 +293,36 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
       }
 
       const reserva = await response.json().catch(() => null) as ReservaGuardada | null;
-      setState(prev => ({ ...prev, ultimaReserva: reserva }));
+      if (!reserva) {
+        throw new Error('No se pudo obtener la reserva confirmada');
+      }
+
+      // La reserva confirmada conserva la instantánea del ticket; el resto del
+      // estado de compra es transitorio y se limpia para la siguiente compra.
+      const confirmada: ReservaGuardada = { ...reserva, receipt };
+      try {
+        sessionStorage.removeItem(CLAVE_RESERVA_ACTUAL);
+      } catch {
+        // La demo sigue funcionando aunque el navegador bloquee sessionStorage.
+      }
+      setState(prev => ({
+        ...prev,
+        ultimaReserva: confirmada,
+        selectedMovie: null,
+        selectedDate: new Date(),
+        selectedShowtime: null,
+        selectedSeats: [],
+        selectedTickets: [],
+        selectedSnacks: [],
+        selectedPromotion: null,
+      }));
       return true;
     } catch (error) {
       console.error("Booking failed:", error);
       toast.error(error instanceof Error ? error.message : "No se pudo completar la reserva");
       return false;
+    } finally {
+      confirmandoRef.current = false;
     }
   };
 

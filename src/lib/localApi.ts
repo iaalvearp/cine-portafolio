@@ -17,6 +17,7 @@ import {
     type Reserva,
 } from '@/data/seed';
 
+// Persistencia de la demo: solo en este navegador/dispositivo (no hay backend real).
 export const CLAVE_RESERVAS = 'cine_reservas';
 export const MENSAJE_SIN_PERMISOS = 'No tienes permisos para esta función en la demo';
 

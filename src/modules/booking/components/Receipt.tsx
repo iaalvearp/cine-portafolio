@@ -15,9 +15,7 @@ export function Receipt() {
     selectedMovie,
     selectedShowtime,
     selectedDate,
-    selectedTickets,
     selectedSeats,
-    selectedSnacks,
     cinema,
     getTotal,
     resetBooking,
@@ -26,9 +24,25 @@ export function Receipt() {
 
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  if (!selectedMovie || !selectedShowtime) return null;
+  // Tras confirmar, el estado transitorio se limpia y el ticket se renderiza
+  // desde la instantánea guardada en la reserva confirmada.
+  const snapshot = ultimaReserva?.receipt as {
+    movie?: typeof selectedMovie;
+    showtime?: typeof selectedShowtime;
+    date?: string;
+    cinema?: string;
+    seats?: typeof selectedSeats;
+  } | undefined;
 
-  const cinemaInfo = cinemas.find(c => c.id === cinema);
+  const movie = snapshot?.movie ?? selectedMovie;
+  const showtime = snapshot?.showtime ?? selectedShowtime;
+  const fechaTicket = snapshot?.date ? new Date(snapshot.date) : selectedDate;
+  const seats = snapshot?.seats ?? selectedSeats;
+  const cinemaId = snapshot?.cinema ?? cinema;
+
+  if (!movie || !showtime) return null;
+
+  const cinemaInfo = cinemas.find(c => c.id === cinemaId);
   const total = ultimaReserva?.total ?? getTotal();
   const orderNumber = `RES-${String(ultimaReserva?.id ?? Date.now()).slice(-8)}`;
 
@@ -133,44 +147,32 @@ export function Receipt() {
               className="relative isolate w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
               style={{ backgroundColor: '#000000', color: '#FFFFFF' }}
             >
-              {/* Una sola capa de fondo: imagen y degradado comparten el mismo
-                  contenedor absoluto, por encima solo queda el contenido. */}
+              {/* Única capa de fondo: la imagen cubre toda la tarjeta y el
+                  degradado va encima. Ningún elemento en flujo desplaza estas
+                  capas; todo el contenido se apila después. */}
               <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
                 <img
-                  src={selectedMovie.poster}
+                  src={movie.poster}
                   alt=""
                   crossOrigin="anonymous"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  style={{ opacity: 0.55 }}
                 />
                 <div
                   className="absolute inset-0"
-                  style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 100%)' }}
+                  style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)' }}
                 />
               </div>
 
               {/* Content Container */}
               <div className="relative z-10">
-                {/* Header Image */}
-                <div className="relative h-48 w-full overflow-hidden">
-                  <img
-                    src={selectedMovie.poster}
-                    alt={selectedMovie.title}
-                    crossOrigin="anonymous"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover object-center"
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85) 100%)' }}
-                  />
-                  <div className="absolute bottom-4 left-6 z-10 drop-shadow-md">
-                    <h2 className="text-2xl font-bold leading-none" style={{ color: '#FFFFFF', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{selectedMovie.title}</h2>
-                    <p className="text-sm font-bold tracking-wide mt-1" style={{ color: '#F5B041' }}>{selectedShowtime.format}</p>
-                  </div>
+                <div className="px-6 pt-8 pb-2">
+                  <h2 className="text-2xl font-bold leading-none drop-shadow-md" style={{ color: '#FFFFFF', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>{movie.title}</h2>
+                  <p className="text-sm font-bold tracking-wide mt-1" style={{ color: '#F5B041' }}>{showtime.format}</p>
                 </div>
 
-                <div className="p-6 pt-4">
+                <div className="p-6 pt-2">
                   {/* Validation Info */}
                   <div className="flex justify-center mb-6 relative">
                     <div className="bg-white p-2 rounded-xl">
@@ -193,15 +195,15 @@ export function Receipt() {
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#9CA3AF' }}>Sala</p>
-                      <p className="font-bold text-base" style={{ color: '#F5B041' }}>{selectedShowtime.room}</p>
+                      <p className="font-bold text-base" style={{ color: '#F5B041' }}>{showtime.room}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#9CA3AF' }}>Fecha</p>
-                      <p className="font-bold text-base" style={{ color: '#FFFFFF' }}>{format(selectedDate, "d MMM yyyy", { locale: es })}</p>
+                      <p className="font-bold text-base" style={{ color: '#FFFFFF' }}>{format(fechaTicket, "d MMM yyyy", { locale: es })}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#9CA3AF' }}>Hora</p>
-                      <p className="font-bold text-base" style={{ color: '#FFFFFF' }}>{selectedShowtime.time}</p>
+                      <p className="font-bold text-base" style={{ color: '#FFFFFF' }}>{showtime.time}</p>
                     </div>
                   </div>
 
@@ -212,7 +214,7 @@ export function Receipt() {
                   <div className="mb-4">
                     <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#9CA3AF' }}>Asientos</p>
                     <div className="flex flex-wrap gap-2">
-                      {selectedSeats.map(s => (
+                      {seats.map(s => (
                         <span key={s.id} className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: '#F5B041', color: '#000000' }}>
                           {s.row}{s.number}
                         </span>
@@ -259,41 +261,32 @@ export function Receipt() {
           fontFamily: 'sans-serif', // Ensure standard font for PDF
         }}
       >
-        {/* Foto de fondo y degradado con las mismas medidas exactas que en pantalla. */}
+        {/* Única capa de fondo, idéntica a la tarjeta visible: la imagen cubre
+            toda la tarjeta y el degradado va encima, sin elementos en flujo. */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
           <img
-            src={selectedMovie.poster}
+            src={movie.poster}
             alt=""
             crossOrigin="anonymous"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.3 }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.55 }}
           />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 100%)' }}></div>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)' }}></div>
         </div>
 
         {/* Content Layer */}
         <div style={{ position: 'relative', zIndex: 10 }}>
 
-          {/* Header Image Area: foto y degradado comparten contenedor y medidas. */}
-          <div style={{ position: 'relative', height: '192px', width: '100%', overflow: 'hidden' }}>
-            <img
-              src={selectedMovie.poster}
-              alt={selectedMovie.title}
-              crossOrigin="anonymous"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-            />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85) 100%)' }}></div>
-
-            <div style={{ position: 'absolute', bottom: '16px', left: '24px', zIndex: 20, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', lineHeight: '1', margin: 0, color: '#FFFFFF' }}>
-                {selectedMovie.title}
-              </h2>
-              <p style={{ fontSize: '14px', fontWeight: 'bold', marginTop: '4px', color: '#F5B041', margin: 0 }}>
-                {selectedShowtime.format}
-              </p>
-            </div>
+          {/* Cabecera de texto: sin segunda imagen que desplace las capas. */}
+          <div style={{ padding: '32px 24px 8px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', lineHeight: '1', margin: 0, color: '#FFFFFF', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+              {movie.title}
+            </h2>
+            <p style={{ fontSize: '14px', fontWeight: 'bold', marginTop: '4px', color: '#F5B041', margin: 0 }}>
+              {showtime.format}
+            </p>
           </div>
 
-          <div style={{ padding: '24px', paddingTop: '16px' }}>
+          <div style={{ padding: '8px 24px 24px' }}>
 
             {/* QR Code Area */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px', position: 'relative' }}>
@@ -326,15 +319,15 @@ export function Receipt() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: '2px' }}>Sala</p>
-                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#F5B041', margin: 0 }}>{selectedShowtime.room}</p>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#F5B041', margin: 0 }}>{showtime.room}</p>
               </div>
               <div>
                 <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: '2px' }}>Fecha</p>
-                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFFFFF', margin: 0 }}>{format(selectedDate, "d MMM yyyy", { locale: es })}</p>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFFFFF', margin: 0 }}>{format(fechaTicket, "d MMM yyyy", { locale: es })}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: '2px' }}>Hora</p>
-                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFFFFF', margin: 0 }}>{selectedShowtime.time}</p>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFFFFF', margin: 0 }}>{showtime.time}</p>
               </div>
             </div>
 
@@ -352,7 +345,7 @@ export function Receipt() {
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: '8px' }}>Asientos</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {selectedSeats.map(s => (
+                {seats.map(s => (
                   <span key={s.id} style={{
                     fontSize: '12px',
                     fontWeight: 'bold',

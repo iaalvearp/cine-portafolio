@@ -1,0 +1,11 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Home } from "@/shared/components/Home";
+import { fade } from "astro:transitions";
+---
+
+<Layout>
+  <div transition:animate={fade({ duration: "300ms" })}>
+    <Home client:load initialStep="beneficios" />
+  </div>
+</Layout>

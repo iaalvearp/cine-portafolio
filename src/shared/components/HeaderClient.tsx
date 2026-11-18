@@ -1,0 +1,303 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Film, Candy, Gift, Percent, User } from "lucide-react"
+import { Button } from "@/shared/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select"
+import { ThemeToggle } from "@/shared/components/ThemeToggle"
+import { useBooking } from "@/modules/booking/context/BookingContext"
+import { cn } from "@/lib/utils"
+import { getCities, getCinemas, type City, type Cinema } from '@/shared/services/locationService';
+
+interface HeaderClientProps {
+    currentPage?: string
+    [key: string]: any
+}
+
+const menuItems = [
+    { id: "cartelera", label: "Cartelera", icon: Film },
+    { id: "dulceria", label: "Dulcería", icon: Candy },
+    { id: "beneficios", label: "Beneficios", icon: Gift },
+    { id: "promociones", label: "Promociones", icon: Percent },
+    { id: "perfil", label: "Perfil", icon: User },
+]
+
+export default function HeaderClient({ currentPage = "cartelera" }: HeaderClientProps) {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [theme, setTheme] = useState<"light" | "dark">("dark") // Force theme state
+    const { city, cinema, setCity, setCinema, getTotalTickets, user, logout } = useBooking()
+
+    const [citiesList, setCitiesList] = useState<City[]>([])
+    const [cinemasList, setCinemasList] = useState<Cinema[]>([])
+
+    // Observe theme changes to force colors via JS
+    useEffect(() => {
+        const updateTheme = () => {
+            const isDark = document.documentElement.classList.contains("dark")
+            setTheme(isDark ? "dark" : "light")
+        }
+        updateTheme() // Initial check
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === "class") {
+                    updateTheme()
+                }
+            })
+        })
+        observer.observe(document.documentElement, { attributes: true })
+        return () => observer.disconnect()
+    }, [])
+
+    useEffect(() => {
+        const fetchCities = async () => {
+            // ... existing fetchCities logic ...
+            try {
+                const data = await getCities()
+                setCitiesList(data)
+
+                if (data.length > 0) {
+                    const currentCityExists = data.some(c => c.id === city)
+                    if (!currentCityExists) {
+                        setCity(data[0].id)
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load cities", e)
+            }
+        }
+        fetchCities()
+    }, [])
+
+    useEffect(() => {
+        const fetchCinemas = async () => {
+            // ... existing fetchCinemas logic ...
+            try {
+                const data = await getCinemas(city)
+                setCinemasList(data)
+
+                if (data.length > 0) {
+                    const currentCinemaExists = data.some(c => c.id === cinema)
+                    if (!currentCinemaExists) {
+                        setCinema(data[0].id)
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load cinemas", e)
+            }
+        }
+        fetchCinemas()
+    }, [city])
+
+    const totalTickets = getTotalTickets()
+
+    const navigateTo = (path: string) => {
+        window.location.href = `/${path}`
+        setMobileMenuOpen(false)
+    }
+
+    const dropdownStyle = {
+        backgroundColor: theme === "dark" ? "hsl(220, 25%, 6%)" : "#FFFFFF",
+        color: theme === "dark" ? "#FFFFFF" : "#000000",
+        borderColor: theme === "dark" ? "#333333" : "#E5E7EB"
+    }
+
+    return (
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
+            <div className="container mx-auto px-4">
+                <div className="flex h-16 items-center justify-between">
+                    {/* Logo */}
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("cartelera")}>
+                        <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                            <Film className="w-6 h-6 text-primary-foreground" />
+                        </div>
+                        <span className="text-xl font-bold text-gradient hidden sm:block">To Talk</span>
+                    </div>
+
+                    {/* Dropdowns - Desktop */}
+                    <div className="hidden md:flex items-center gap-3">
+                        <Select value={city} onValueChange={setCity}>
+                            <SelectTrigger className="w-36 border" style={dropdownStyle}>
+                                <SelectValue placeholder="Ciudad" />
+                            </SelectTrigger>
+                            <SelectContent className="border" style={dropdownStyle}>
+                                {citiesList.map((c) => (
+                                    <SelectItem
+                                        key={c.id}
+                                        value={c.id}
+                                        className="text-foreground focus:bg-[#F5B041] focus:text-black cursor-pointer"
+                                        style={{ color: dropdownStyle.color }}
+                                    >
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={cinema} onValueChange={setCinema}>
+                            <SelectTrigger className="w-48 border" style={dropdownStyle}>
+                                <SelectValue placeholder="Cine" />
+                            </SelectTrigger>
+                            <SelectContent className="border" style={dropdownStyle}>
+                                {cinemasList.map((c) => (
+                                    <SelectItem
+                                        key={c.id}
+                                        value={c.id}
+                                        className="text-foreground focus:bg-[#F5B041] focus:text-black cursor-pointer"
+                                        style={{ color: dropdownStyle.color }}
+                                    >
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Navigation - Desktop */}
+                    <nav className="hidden xl:flex items-center gap-1">
+                        {menuItems.map((item) => {
+                            const isProfile = item.id === 'perfil'
+                            const isActive = currentPage === item.id
+                            return (
+                                <Button
+                                    key={item.id}
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                        "flex items-center gap-2 transition-all duration-200 border-none",
+                                        !isProfile && !isActive && "text-foreground/80 hover:text-cinema-gold hover:bg-transparent",
+                                        !isProfile && isActive && "bg-white text-black font-bold",
+                                        isProfile && "text-black hover:opacity-90 shadow-sm font-bold"
+                                    )}
+                                    style={(isActive && !isProfile) ? { boxShadow: '-20px -20px 28px #FFFFFF, 20px 20px 28px rgba(13, 39, 80, 0.18)' } : (isProfile ? { background: 'linear-gradient(to right, hsl(var(--cinema-gold)), hsl(var(--cinema-gold-light)))' } : undefined)}
+                                    onClick={() => navigateTo(item.id)}
+                                >
+                                    <item.icon className={cn(
+                                        "w-4 h-4",
+                                        (!isProfile && isActive) ? "text-black" : ""
+                                    )} />
+                                    <span>{item.id === 'perfil' && user ? user.nombre : item.label}</span>
+                                </Button>
+                            )
+                        })}
+
+                        {/* Theme Toggle - Desktop */}
+                        <div className="ml-2 pl-2 border-l border-border/40">
+                            <ThemeToggle />
+                        </div>
+                    </nav>
+
+                    {/* Mobile Menu Toggle Button */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="xl:hidden text-foreground hover:bg-transparent"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    >
+                        {mobileMenuOpen ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 18 12" /></svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                        )}
+                        <span className="sr-only">Toggle menu</span>
+                    </Button>
+                </div>
+            </div>
+
+            {/* Mobile Menu */}
+            <div
+                className={cn(
+                    "xl:hidden absolute top-full left-0 right-0 glass-effect border-b border-border/40 transition-all duration-300 overflow-hidden",
+                    mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0",
+                )}
+            >
+                <div className="container mx-auto px-4 py-4 space-y-4">
+                    {/* Mobile Dropdowns */}
+                    <div className="flex flex-col gap-3">
+                        <Select value={city} onValueChange={setCity}>
+                            <SelectTrigger className="w-full border" style={dropdownStyle}>
+                                <SelectValue placeholder="Ciudad" />
+                            </SelectTrigger>
+                            <SelectContent className="border" style={dropdownStyle}>
+                                {citiesList.map((c) => (
+                                    <SelectItem
+                                        key={c.id}
+                                        value={c.id}
+                                        className="text-foreground focus:bg-[#F5B041] focus:text-black cursor-pointer"
+                                        style={{ color: dropdownStyle.color }}
+                                    >
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={cinema} onValueChange={setCinema}>
+                            <SelectTrigger className="w-full border" style={dropdownStyle}>
+                                <SelectValue placeholder="Cine" />
+                            </SelectTrigger>
+                            <SelectContent className="border" style={dropdownStyle}>
+                                {cinemasList.map((c) => (
+                                    <SelectItem
+                                        key={c.id}
+                                        value={c.id}
+                                        className="text-foreground focus:bg-[#F5B041] focus:text-black cursor-pointer"
+                                        style={{ color: dropdownStyle.color }}
+                                    >
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+
+                    {/* Mobile Nav Items */}
+                    <nav className="flex flex-col gap-1">
+                        {menuItems.map((item) => (
+                            <Button
+                                key={item.id}
+                                variant="ghost"
+                                className={cn(
+                                    "w-full justify-start gap-3 text-foreground/80 hover:text-primary hover:bg-primary/10 transition-colors",
+                                    currentPage === item.id && "bg-primary/10 text-primary",
+                                )}
+                                onClick={() => navigateTo(item.id)}
+                            >
+                                <item.icon className="w-5 h-5" />
+                                <span>{item.label}</span>
+                            </Button>
+                        ))}
+                    </nav>
+
+                    {/* Theme Toggle - Mobile */}
+                    <div className="flex items-center justify-between py-2 px-3 border-y border-border/40">
+                        <span className="text-sm text-muted-foreground">Tema</span>
+                        <ThemeToggle />
+                    </div>
+
+                    {
+                        user ? (
+                            <Button
+                                className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => {
+                                    logout();
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                Cerrar Sesión
+                            </Button>
+                        ) : (
+                            <Button
+                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                                onClick={() => navigateTo('perfil')}
+                            >
+                                Ingresar
+                            </Button>
+                        )
+                    }
+                </div >
+            </div >
+        </header >
+    )
+}

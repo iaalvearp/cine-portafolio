@@ -1,0 +1,59 @@
+---
+import "../styles/global.css";
+import { GlobalLoader } from "@/shared/components/GlobalLoader";
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>To Talk</title>
+
+		{/* Prevent theme flash by applying theme before page renders */}
+		<script is:inline>
+			(function () {
+				const getSystemTheme = () => {
+					return window.matchMedia("(prefers-color-scheme: dark)")
+						.matches
+						? "dark"
+						: "light";
+				};
+
+				const getTheme = () => {
+					const savedMode = localStorage.getItem("themeMode");
+
+					// Si no hay modo guardado, usar 'auto' por defecto
+					if (!savedMode || savedMode === "auto") {
+						return getSystemTheme();
+					}
+
+					// Si es 'light' o 'dark', usar ese tema directamente
+					return savedMode;
+				};
+
+				const theme = getTheme();
+				if (theme === "dark") {
+					document.documentElement.classList.add("dark");
+				} else {
+					document.documentElement.classList.remove("dark");
+				}
+			})();
+		</script>
+	</head>
+	<body>
+		<GlobalLoader client:load />
+		<slot />
+	</body>
+</html>
+
+<style>
+	html,
+	body {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+	}
+</style>

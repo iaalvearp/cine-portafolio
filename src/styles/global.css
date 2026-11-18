@@ -228,3 +228,27 @@
 ::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--primary) / 0.7);
 }
+
+/* Entrada suave del detalle de película */
+@keyframes detalle-entrada {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.detalle-entrada {
+  animation: detalle-entrada 600ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .detalle-entrada { animation: none; }
+}
+
+/* El fondo fijo del detalle se crea con createPortal en document.body (z-1):
+   sin transform residual en el contenedor raíz (el fill-mode forwards dejaba un
+   transform que creaba contexto de apilamiento y captura el position:fixed), y
+   con el pie de página por encima de esa capa para que siga visible. */
+.animate-fade-in {
+  animation-fill-mode: none;
+}
+footer {
+  position: relative;
+  z-index: 2;
+}

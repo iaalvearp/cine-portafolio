@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { flushSync } from 'react-dom';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { flushSync, createPortal } from 'react-dom';
 import { ArrowLeft, Clock, Play, ChevronLeft, ChevronRight, Clapperboard } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -16,6 +16,7 @@ import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { API_ENDPOINTS, buildUrl } from '@/config/api';
 import { apiFetch } from '@/lib/localApi';
+import { tomarOrigen } from '../lib/transicionPoster';
 
 interface BackendShowtime {
   id: number;
@@ -56,6 +57,47 @@ export function MovieDetail() {
     im.src = selectedMovie.fondo;
     if (im.complete && im.naturalWidth) medir();
   }, [selectedMovie?.fondo]);
+
+  // Marco de la portada grande y estado de carga de cada imagen del nuevo layout.
+  const marcoRef = useRef<HTMLDivElement>(null);
+  const [fondoListo, setFondoListo] = useState(false);
+  const [grandeLista, setGrandeLista] = useState(false);
+  useEffect(() => {
+    setFondoListo(false);
+    setGrandeLista(false);
+  }, [selectedMovie?.fondo]);
+
+  // Animación de viaje: la miniatura tocada en la cartelera crece hasta el marco.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    if (!selectedMovie) return;
+    const el = marcoRef.current;
+    if (!el || typeof el.animate !== 'function') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const origen = tomarOrigen(selectedMovie.id);
+    const r = el.getBoundingClientRect();
+    if (origen && r.width > 0 && r.height > 0) {
+      const dx = origen.left - r.left;
+      const dy = origen.top - r.top;
+      const sx = origen.width / r.width;
+      const sy = origen.height / r.height;
+      el.animate(
+        [
+          { transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+          { transformOrigin: 'top left', transform: 'translate(0px, 0px) scale(1, 1)' },
+        ],
+        { duration: 700, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+      );
+    } else {
+      el.animate(
+        [
+          { opacity: 0, transform: 'translateY(16px) scale(0.96)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        { duration: 500, easing: 'ease-out' }
+      );
+    }
+  }, [selectedMovie?.id]);
 
   if (!selectedMovie) return null;
 
@@ -171,45 +213,47 @@ export function MovieDetail() {
     }
   };
 
-  const fondoActual = selectedMovie.fondo;
   const anio = String(selectedMovie.releaseDate).slice(0, 4);
 
+  // CAPA 1: fondo fijo a pantalla completa, fuera del árbol del detalle (portal a body).
+  const capaFondo = (
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 z-[1] overflow-hidden pointer-events-none"
+      style={{ background: '#0b0d12' }}
+    >
+      <img
+        src={selectedMovie.fondo}
+        alt=""
+        decoding="async"
+        ref={(el) => { if (el && el.complete && el.naturalWidth) setFondoListo(true); }}
+        onLoad={() => setFondoListo(true)}
+        style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center top',
+          filter: 'blur(28px) brightness(0.55) saturate(1.2)',
+          transform: 'scale(1.12)',
+          opacity: fondoListo ? 1 : 0,
+          transition: 'opacity 700ms ease',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, rgba(11,13,18,0.45) 0%, rgba(11,13,18,0.80) 100%)',
+        }}
+      />
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero del detalle: una sola capa de imagen recortada desde arriba. */}
-      <section
-        className="relative w-full overflow-hidden min-h-[520px] h-[72vh] max-h-[780px] mt-0 pt-0"
-        style={{ background: '#0b0d12' }}
-      >
-        {/* Capa 1: imagen (nítida si es ancha, ambiente desenfocada si es vertical). */}
-        <img
-          src={fondoActual}
-          alt=""
-          fetchPriority="high"
-          decoding="async"
-          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-700 ${orient === 'cargando' ? 'opacity-0' : 'opacity-100'}`}
-          style={{
-            objectPosition: 'center top',
-            ...(orient === 'vertical'
-              ? { filter: 'blur(26px) brightness(0.5) saturate(1.2)', transform: 'scale(1.15)' }
-              : {}),
-          }}
-        />
+    <div className="relative min-h-screen">
+      {typeof document !== 'undefined' ? createPortal(capaFondo, document.body) : capaFondo}
 
-        {/* Capa 2: degradado inferior que termina en el color de fondo de la página. */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background)) 8%, rgba(0,0,0,0) 62%)' }}
-        />
-
-        {/* Capa 3: oscurecido lateral para legibilidad. */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: orient === 'ancho' ? 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 45%, rgba(0,0,0,0) 75%)' : 'rgba(0,0,0,0.25)' }}
-        />
-
-        {/* Capa 4: botón Regresar. */}
-        <div className="absolute top-6 left-6 z-20">
+      {/* CAPA 2: contenido, siempre por encima del fondo */}
+      <div className="relative z-10 mx-auto w-full max-w-[1600px] px-4 md:px-8 pt-6 pb-24">
+        {/* Botón Regresar */}
+        <div className="mb-6">
           <Button
             className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-2 text-white backdrop-blur"
             onClick={() => {
@@ -229,66 +273,73 @@ export function MovieDetail() {
           </Button>
         </div>
 
-        {/* Capa 5: portada (solo vertical) y datos de la película. */}
-        <div className="relative z-10 flex h-full items-end gap-6 md:gap-10 px-6 md:px-10 pb-10 mx-auto w-full max-w-7xl">
-          {orient === 'vertical' && (
-            <div className="relative hidden sm:block shrink-0 w-40 md:w-52 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/15">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
+
+          {/* COLUMNA IZQUIERDA */}
+          <div className="min-w-0">
+            {/* Marco de la portada grande */}
+            <div
+              ref={marcoRef}
+              className="relative z-20 w-full max-w-[300px] sm:max-w-[380px] mx-auto lg:mx-0 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/15 bg-black/40"
+            >
+              {/* a) la miniatura (poster), siempre visible desde el primer instante */}
               <img
                 src={selectedMovie.poster}
                 alt={selectedMovie.title}
-                className="w-full h-full object-cover"
-                style={{ viewTransitionName: `movie-poster-${selectedMovie.id}` } as React.CSSProperties}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ objectPosition: 'center top' }}
               />
-              {selectedMovie.rating && (
-                <div className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold">
-                  {selectedMovie.rating}
-                </div>
+              {/* b) la imagen grande, encima, solo si es vertical y distinta del poster */}
+              {orient === 'vertical' && selectedMovie.fondo !== selectedMovie.poster && (
+                <img
+                  src={selectedMovie.fondo}
+                  alt=""
+                  fetchPriority="high"
+                  decoding="async"
+                  ref={(el) => { if (el && el.complete && el.naturalWidth) setGrandeLista(true); }}
+                  onLoad={() => setGrandeLista(true)}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ objectPosition: 'center top', opacity: grandeLista ? 1 : 0, transition: 'opacity 500ms ease' }}
+                />
               )}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-3 max-w-2xl">
-            {selectedMovie.isPreSale && (
-              <Badge className="bg-destructive text-destructive-foreground w-max">
-                Pre-venta
-              </Badge>
-            )}
-            <h1
-              className="text-3xl md:text-5xl font-extrabold leading-tight text-white"
-              style={{ textShadow: '0 2px 14px rgba(0,0,0,0.75)' }}
-            >
-              {selectedMovie.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
-              {selectedMovie.rating && (
-                <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{selectedMovie.rating}</span>
-              )}
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                <Clock className="w-4 h-4" />
-                {selectedMovie.duration}
+              {/* c) insignia de clasificación */}
+              <span className="absolute top-3 left-3 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur">
+                {selectedMovie.rating}
               </span>
-              <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{anio}</span>
-              {selectedMovie.genre.map((g: string) => (
-                <span key={g} className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{g}</span>
-              ))}
-              {selectedMovie.format.map((f: string) => (
-                <span key={f} className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{f}</span>
-              ))}
             </div>
-          </div>
-        </div>
-      </section>
 
-      <div className="relative z-10 pt-8">
-        {/* Content - 50/50 TWO COLUMNS */}
-        <div className="container mx-auto px-4 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-
-            {/* LEFT COLUMN - 50% - Movie Info */}
-            <div className="space-y-4">
+            {/* Debajo de la portada: título, chips, trailer, sinopsis, información */}
+            <div className="detalle-entrada mt-6" style={{ animationDelay: '350ms' }}>
+              {selectedMovie.isPreSale && (
+                <Badge className="bg-destructive text-destructive-foreground w-max block mb-3">
+                  Pre-venta
+                </Badge>
+              )}
+              <h1
+                className="text-3xl md:text-4xl font-extrabold leading-tight text-white"
+                style={{ textShadow: '0 2px 14px rgba(0,0,0,0.75)' }}
+              >
+                {selectedMovie.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-white/90 mt-3">
+                {selectedMovie.rating && (
+                  <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{selectedMovie.rating}</span>
+                )}
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                  <Clock className="w-4 h-4" />
+                  {selectedMovie.duration}
+                </span>
+                <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{anio}</span>
+                {selectedMovie.genre.map((g: string) => (
+                  <span key={g} className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{g}</span>
+                ))}
+                {selectedMovie.format.map((f: string) => (
+                  <span key={f} className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">{f}</span>
+                ))}
+              </div>
               {/* Ver Trailer Button - YELLOW BACKGROUND, BLACK TEXT */}
               <Button
-                className="w-max text-black font-bold gap-2 border-none hover:opacity-90 transition-opacity"
+                className="w-max mt-5 text-black font-bold gap-2 border-none hover:opacity-90 transition-opacity"
                 style={{ background: 'linear-gradient(to right, hsl(var(--cinema-gold)), hsl(var(--cinema-gold-light)))' }}
               >
                 <Play className="w-5 h-5" />
@@ -296,7 +347,7 @@ export function MovieDetail() {
               </Button>
 
               {/* Sinopsis */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-5">
                 <h3 className="text-lg font-semibold text-foreground">Sinopsis</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {selectedMovie.synopsis}
@@ -304,7 +355,7 @@ export function MovieDetail() {
               </div>
 
               {/* Información */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-5">
                 <h3 className="text-lg font-semibold text-foreground">Información</h3>
                 <div className="flex flex-wrap gap-2">
                   {selectedMovie.genre.map((g: string) => (
@@ -315,11 +366,12 @@ export function MovieDetail() {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* RIGHT COLUMN - 50% - Showtimes */}
-            <div className="space-y-6">
+            {/* COLUMNA DERECHA: su borde superior queda a la misma altura que el marco de la portada */}
+            <div className="min-w-0 space-y-6 detalle-entrada mt-0 pt-0" style={{ animationDelay: '450ms' }}>
               {/* Funciones Header */}
-              <h2 className="text-xl font-semibold text-foreground">Funciones</h2>
+              <h2 className="mt-0 pt-0 text-xl font-semibold text-foreground">Funciones</h2>
 
               {/* 3 Dropdowns */}
               <div className="grid grid-cols-3 gap-3">
@@ -503,11 +555,8 @@ export function MovieDetail() {
               </div>
             </div>
 
-          </div>
         </div>
       </div>
-
-
     </div>
   );
 }

@@ -21,6 +21,7 @@ export function Receipt() {
     cinema,
     getTotal,
     resetBooking,
+    ultimaReserva,
   } = useBooking();
 
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -28,8 +29,8 @@ export function Receipt() {
   if (!selectedMovie || !selectedShowtime) return null;
 
   const cinemaInfo = cinemas.find(c => c.id === cinema);
-  const total = getTotal();
-  const orderNumber = `ORD-${Date.now().toString().slice(-8)}`;
+  const total = ultimaReserva?.total ?? getTotal();
+  const orderNumber = `RES-${String(ultimaReserva?.id ?? Date.now()).slice(-8)}`;
 
   const handleDownloadPDF = async () => {
     // Target the specific hidden element designed for PDF generation
@@ -83,7 +84,7 @@ export function Receipt() {
                 ¡Compra Exitosa!
               </h1>
               <p className="text-xl text-muted-foreground max-w-md mx-auto lg:mx-0">
-                Hemos enviado los detalles de tu compra a tu correo electrónico.
+                Tu reserva de demostración quedó guardada en este navegador. Descarga tu ticket PDF.
               </p>
             </div>
 

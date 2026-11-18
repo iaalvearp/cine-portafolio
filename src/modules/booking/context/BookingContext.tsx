@@ -30,6 +30,16 @@ export interface SelectedSeat {
   price: number;
 }
 
+interface ReservaGuardada {
+  id: number;
+  seats: string[];
+  total: number;
+  bookingDate: string;
+  [key: string]: any;
+}
+
+const CLAVE_RESERVA_ACTUAL = 'cine_reserva_actual';
+
 interface User {
   id: number;
   nombre: string;
@@ -49,6 +59,7 @@ interface BookingState {
   cinema: string;
   user: User | null;
   selectedPromotion: Promocion | null;
+  ultimaReserva: ReservaGuardada | null;
 }
 
 interface BookingContextType extends BookingState {
@@ -89,6 +100,7 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
     cinema: 'scala',
     user: null,
     selectedPromotion: null,
+    ultimaReserva: null,
   });
 
   // Restore user from localStorage on mount
@@ -104,6 +116,51 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
       }
     }
   }, []);
+
+  // Restore the booking in progress after a full page navigation/reload.
+  // The current step always comes from the Astro page, so menu navigation keeps working.
+  useEffect(() => {
+    try {
+      const guardado = sessionStorage.getItem(CLAVE_RESERVA_ACTUAL);
+      if (!guardado) return;
+
+      const datos = JSON.parse(guardado);
+      setState(prev => ({
+        ...prev,
+        selectedMovie: datos.selectedMovie ?? prev.selectedMovie,
+        selectedDate: datos.selectedDate ? new Date(datos.selectedDate) : prev.selectedDate,
+        selectedShowtime: datos.selectedShowtime ?? prev.selectedShowtime,
+        selectedSeats: Array.isArray(datos.selectedSeats) ? datos.selectedSeats : prev.selectedSeats,
+        selectedTickets: Array.isArray(datos.selectedTickets) ? datos.selectedTickets : prev.selectedTickets,
+        selectedSnacks: Array.isArray(datos.selectedSnacks) ? datos.selectedSnacks : prev.selectedSnacks,
+        selectedPromotion: datos.selectedPromotion ?? prev.selectedPromotion,
+        city: datos.city ?? prev.city,
+        cinema: datos.cinema ?? prev.cinema,
+        ultimaReserva: datos.ultimaReserva ?? prev.ultimaReserva,
+      }));
+    } catch (e) {
+      console.error("Failed to restore booking", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CLAVE_RESERVA_ACTUAL, JSON.stringify({
+        selectedMovie: state.selectedMovie,
+        selectedDate: state.selectedDate instanceof Date ? state.selectedDate.toISOString() : new Date().toISOString(),
+        selectedShowtime: state.selectedShowtime,
+        selectedSeats: state.selectedSeats,
+        selectedTickets: state.selectedTickets,
+        selectedSnacks: state.selectedSnacks,
+        selectedPromotion: state.selectedPromotion,
+        city: state.city,
+        cinema: state.cinema,
+        ultimaReserva: state.ultimaReserva,
+      }));
+    } catch {
+      // La demo sigue funcionando aunque el navegador bloquee sessionStorage.
+    }
+  }, [state]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -167,6 +224,8 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
         throw new Error(errorData.mensaje || 'Error al procesar la reserva');
       }
 
+      const reserva = await response.json().catch(() => null) as ReservaGuardada | null;
+      setState(prev => ({ ...prev, ultimaReserva: reserva }));
       return true;
     } catch (error) {
       console.error("Booking failed:", error);
@@ -300,7 +359,14 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
     // So selectedTickets WILL be populated.
     const ticketsTotalFromTickets = state.selectedTickets.reduce((sum, t) => sum + t.type.price * t.quantity, 0);
     const snacksTotal = state.selectedSnacks.reduce((sum, s) => sum + s.price * s.quantity, 0);
-    return ticketsTotalFromTickets + snacksTotal;
+    const subtotal = ticketsTotalFromTickets + snacksTotal;
+
+    if (!state.selectedPromotion) return subtotal;
+
+    const descuento = state.selectedPromotion.descuento ?? '';
+    const coincidencia = descuento.match(/(\d+)%/);
+    const porcentaje = coincidencia ? Number(coincidencia[1]) : 10;
+    return Number((subtotal * (1 - porcentaje / 100)).toFixed(2));
   };
 
   const getTotalTickets = () => {
@@ -308,6 +374,11 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
   };
 
   const resetBooking = () => {
+    try {
+      sessionStorage.removeItem(CLAVE_RESERVA_ACTUAL);
+    } catch {
+      // Nada que limpiar si el almacenamiento no está disponible.
+    }
     setState({
       selectedMovie: null,
       selectedDate: new Date(),
@@ -320,6 +391,7 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
       cinema: state.cinema,
       user: state.user,
       selectedPromotion: null,
+      ultimaReserva: null,
     });
   };
 

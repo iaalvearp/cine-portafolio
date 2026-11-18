@@ -21,15 +21,16 @@ export function PaymentForm() {
     cinema,
     setStep,
     selectedPromotion,
+    getTotal,
     confirmBooking
   } = useBooking();
 
   const [timeLeft, setTimeLeft] = useState(720); // 12 minutes
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
+  const [cardNumber, setCardNumber] = useState('4242424242424242');
+  const [cardName, setCardName] = useState('INVITADO DEMO');
+  const [expiry, setExpiry] = useState('12/30');
+  const [cvc, setCvc] = useState('123');
   const [isFlipped, setIsFlipped] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -68,12 +69,13 @@ export function PaymentForm() {
   // Calculate discount
   let discount = 0;
   if (selectedPromotion) {
-    if (selectedPromotion.descuento?.includes('50%')) discount = subTotal * 0.5;
-    else if (selectedPromotion.descuento?.includes('20%')) discount = subTotal * 0.2;
-    else discount = subTotal * 0.1;
+    const descuento = selectedPromotion.descuento ?? '';
+    const coincidencia = descuento.match(/(\d+)%/);
+    const porcentaje = coincidencia ? Number(coincidencia[1]) : 10;
+    discount = subTotal * porcentaje / 100;
   }
 
-  const finalTotal = subTotal - discount;
+  const finalTotal = getTotal();
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -135,6 +137,13 @@ export function PaymentForm() {
               <CreditCard className="text-primary" />
               Pago Seguro
             </h2>
+
+            <div className="mb-6 p-4 rounded-xl border border-[#F5B041]/30 bg-[#F5B041]/10">
+              <p className="text-sm font-bold text-[#F5B041]">Pago simulado – no ingreses datos reales</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Tarjeta de prueba: 4242 4242 4242 4242 · Vence 12/30 · CVC 123
+              </p>
+            </div>
 
             {/* VISUAL CARD WRAPPER - Fixed 3D Flip & Layout */}
             <div

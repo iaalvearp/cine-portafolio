@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Film, Candy, Gift, Percent, User } from "lucide-react"
+import { Film, Candy, Gift, Percent, User, LogOut } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select"
 import { ThemeToggle } from "@/shared/components/ThemeToggle"
@@ -179,8 +179,19 @@ export default function HeaderClient({ currentPage = "cartelera" }: HeaderClient
                             )
                         })}
 
-                        {/* Theme Toggle - Desktop */}
-                        <div className="ml-2 pl-2 border-l border-border/40">
+                        {/* Logout y Theme Toggle - Desktop */}
+                        <div className="ml-2 pl-2 border-l border-border/40 flex items-center gap-2">
+                            {user && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Cerrar sesión"
+                                    onClick={logout}
+                                    className="text-foreground hover:bg-primary/10"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                </Button>
+                            )}
                             <ThemeToggle />
                         </div>
                     </nav>

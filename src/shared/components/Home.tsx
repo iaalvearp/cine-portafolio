@@ -17,7 +17,6 @@ import { Beneficios } from '@/modules/marketing/components/Beneficios';
 import { Promociones } from '@/modules/marketing/components/Promociones';
 import { Perfil } from '@/modules/users/components/Perfil';
 import { LoginForm } from '@/modules/users/components/LoginForm';
-import { RegisterForm } from '@/modules/users/components/RegisterForm';
 import { SnacksUpsell } from '@/modules/booking/components/SnacksUpsell';
 
 const Content = () => {
@@ -40,7 +39,6 @@ const Content = () => {
             case 'promociones': return <Promociones />;
             case 'perfil': return <Perfil />;
             case 'login': return <LoginForm />;
-            case 'register': return <RegisterForm />;
             case 'cartelera':
             default:
                 return (

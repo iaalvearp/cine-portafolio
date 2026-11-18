@@ -5,6 +5,8 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { toast } from 'sonner';
+import { credencialesDemo } from '@/data/seed/usuarioInvitado';
+import { MENSAJE_SIN_PERMISOS } from '@/lib/localApi';
 
 export const LoginForm = () => {
     const { login, setStep } = useBooking();
@@ -12,19 +14,26 @@ export const LoginForm = () => {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const iniciarSesion = async (correo: string, clave: string) => {
         setIsLoading(true);
-
         try {
-            await login(email, password);
-            // Login successful - redirection is handled in context or we can do it here if context doesn't
-            // Context sets step to 'cartelera' on success
+            await login(correo, clave);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Error al iniciar sesión');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await iniciarSesion(email, password);
+    };
+
+    const entrarComoInvitado = async () => {
+        setEmail(credencialesDemo.email);
+        setPassword(credencialesDemo.password);
+        await iniciarSesion(credencialesDemo.email, credencialesDemo.password);
     };
 
     return (
@@ -57,6 +66,12 @@ export const LoginForm = () => {
                                 required
                             />
                         </div>
+
+                        <div className="rounded-lg border border-dashed border-[#F5B041]/40 bg-[#F5B041]/10 p-3 text-sm">
+                            <p className="font-bold text-[#F5B041]">Acceso de invitado (demo)</p>
+                            <p className="text-muted-foreground mt-1">Correo: {credencialesDemo.email}</p>
+                            <p className="text-muted-foreground">Contraseña: {credencialesDemo.password}</p>
+                        </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4">
                         <Button
@@ -71,9 +86,18 @@ export const LoginForm = () => {
                             type="button"
                             variant="outline"
                             className="w-full"
-                            onClick={() => setStep('register')}
+                            onClick={entrarComoInvitado}
+                            disabled={isLoading}
                         >
-                            ¿No tienes cuenta? Regístrate
+                            Entrar como invitado
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full"
+                            onClick={() => toast.info(MENSAJE_SIN_PERMISOS)}
+                        >
+                            Crear cuenta
                         </Button>
                         <Button
                             type="button"

@@ -4,6 +4,7 @@ import type { Promocion } from '@/modules/marketing/services/promocionesService'
 import { toast } from 'sonner';
 import { API_ENDPOINTS } from '@/config/api';
 import { apiFetch } from '@/lib/localApi';
+import { usuarioInvitado } from '@/data/seed/usuarioInvitado';
 
 export interface Snack {
   id: string;
@@ -54,7 +55,7 @@ interface BookingState {
   selectedSeats: SelectedSeat[];
   selectedTickets: SelectedTicket[];
   selectedSnacks: SelectedSnack[];
-  step: 'cartelera' | 'movie' | 'seats' | 'tickets' | 'snacks' | 'payment' | 'receipt' | 'dulceria' | 'beneficios' | 'promociones' | 'perfil' | 'login' | 'register';
+  step: 'cartelera' | 'movie' | 'seats' | 'tickets' | 'snacks' | 'payment' | 'receipt' | 'dulceria' | 'beneficios' | 'promociones' | 'perfil' | 'login';
   city: string;
   cinema: string;
   user: User | null;
@@ -103,17 +104,30 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
     ultimaReserva: null,
   });
 
-  // Restore user from localStorage on mount
+  // Sesión de invitado: la primera visita entra como Invitado; tras logout no se reautentica.
   useEffect(() => {
-    const storedUser = localStorage.getItem('cine_user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setState(prev => ({ ...prev, user }));
-      } catch (e) {
-        console.error("Failed to parse stored user", e);
-        localStorage.removeItem('cine_user');
+    try {
+      const sesion = localStorage.getItem('cine_sesion');
+
+      if (!sesion) {
+        const invitado = { ...usuarioInvitado };
+        localStorage.setItem('cine_sesion', JSON.stringify(invitado));
+        setState(prev => ({ ...prev, user: invitado }));
+        return;
       }
+
+      if (sesion === 'cerrada') return;
+
+      const user = JSON.parse(sesion);
+      setState(prev => ({ ...prev, user }));
+    } catch (e) {
+      console.error("Failed to restore session", e);
+      try {
+        localStorage.setItem('cine_sesion', JSON.stringify(usuarioInvitado));
+      } catch {
+        // La demo sigue funcionando en memoria aunque falle el almacenamiento.
+      }
+      setState(prev => ({ ...prev, user: { ...usuarioInvitado } }));
     }
   }, []);
 
@@ -174,7 +188,11 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
 
       if (response.ok && data.status === 'success') {
         const user = { id: data.id, nombre: data.nombre, email: email, rol: data.rol };
-        localStorage.setItem('cine_user', JSON.stringify(user));
+        try {
+          localStorage.setItem('cine_sesion', JSON.stringify(user));
+        } catch {
+          // La sesión permanece activa en memoria durante esta visita.
+        }
         setState(prev => ({
           ...prev,
           user,
@@ -191,10 +209,14 @@ export function BookingProvider({ children, initialStep = 'cartelera' }: { child
   };
 
   const logout = () => {
-    localStorage.removeItem('cine_user');
-    setState(prev => ({ ...prev, user: null, step: 'cartelera' }));
+    try {
+      localStorage.setItem('cine_sesion', 'cerrada');
+    } catch {
+      // No hay sesión previa que limpiar.
+    }
+    setState(prev => ({ ...prev, user: null, step: 'login' }));
     toast.info("Has cerrado sesión");
-    window.location.href = '/';
+    window.location.href = '/perfil';
   };
 
   const confirmBooking = async (): Promise<boolean> => {

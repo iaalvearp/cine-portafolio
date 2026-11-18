@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Edit2, Save } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { HeroMedia } from './HeroMedia';
 import { getMoviesCache, movieService } from '@/modules/cartelera/services/movieService';
 import type { Movie } from '@/modules/cartelera/types/Movie';
 import { useBooking } from '@/modules/booking/context/BookingContext';
@@ -75,11 +76,11 @@ export function HeroCarousel(props: any) {
   };
 
   if (loading || movies.length === 0) {
-    return <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] bg-muted animate-pulse" />;
+    return <div className="w-full h-[55vh] lg:h-[70vh] min-h-[300px] bg-muted animate-pulse" />;
   }
 
   return (
-    <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden group">
+    <div className="relative w-full h-[55vh] lg:h-[70vh] min-h-[300px] overflow-hidden group">
       {movies.map((movie, index) => (
         <div
           key={movie.id}
@@ -88,21 +89,15 @@ export function HeroCarousel(props: any) {
             index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
           )}
         >
-          {/* Background Image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-all duration-500"
-            style={{ backgroundImage: `url(${movie.backdrop})` }}
-          >
-            <div className="absolute inset-0 bg-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          </div>
-
-
+          {/* Imagen grande y capas, todas dentro del mismo contenedor. */}
+          <HeroMedia key={movie.id} movie={movie} />
 
           {/* Content */}
           <div className="relative h-full container mx-auto px-4 flex items-center">
-            <div className="max-w-xl space-y-4 animate-slide-in">
+            <div
+              className="max-w-xl space-y-4 animate-slide-in"
+              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}
+            >
               <p className="text-primary font-medium text-sm uppercase tracking-wider">
                 En Cartelera
               </p>

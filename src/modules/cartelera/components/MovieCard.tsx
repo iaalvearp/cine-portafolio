@@ -6,6 +6,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import type { Movie } from '@/modules/cartelera/types/Movie';
 import { useBooking } from '@/modules/booking/context/BookingContext';
 import { cn } from '@/lib/utils';
+import { guardarOrigen } from '../lib/transicionPoster';
 
 interface MovieCardProps {
   movie: Movie;
@@ -39,6 +40,10 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
       style={{ animationDelay: `${index * 100}ms` }}
       onMouseEnter={() => precargarFondo(movie)}
       onTouchStart={() => precargarFondo(movie)}
+      onClickCapture={(e) => {
+        const im = e.currentTarget.querySelector('[data-poster-img]');
+        if (im) guardarOrigen(movie.id, im);
+      }}
     >
       <div className="relative overflow-hidden rounded-xl bg-card border border-border/50 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
         {/* Poster */}
@@ -46,6 +51,7 @@ export const MovieCard = memo(function MovieCard({ movie, index }: MovieCardProp
           <img
             src={movie.poster}
             alt={movie.title}
+            data-poster-img="true"
             width={400}
             height={600}
             decoding="async"

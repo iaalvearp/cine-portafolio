@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { flushSync, createPortal } from 'react-dom';
+import { flushSync } from 'react-dom';
 import { ArrowLeft, Clock, Play, ChevronLeft, ChevronRight, Clapperboard } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -215,7 +215,8 @@ export function MovieDetail() {
 
   const anio = String(selectedMovie.releaseDate).slice(0, 4);
 
-  // CAPA 1: fondo fijo a pantalla completa, fuera del árbol del detalle (portal a body).
+  // CAPA 1: fondo fijo a pantalla completa. Se renderiza dentro del árbol (sin portal)
+  // para que compita por z-index en el mismo contexto de apilamiento que el contenido.
   const capaFondo = (
     <div
       aria-hidden="true"
@@ -248,7 +249,7 @@ export function MovieDetail() {
 
   return (
     <div className="relative min-h-screen">
-      {typeof document !== 'undefined' ? createPortal(capaFondo, document.body) : capaFondo}
+      {capaFondo}
 
       {/* CAPA 2: contenido, siempre por encima del fondo */}
       <div className="relative z-10 mx-auto w-full max-w-[1600px] px-4 md:px-8 pt-6 pb-24">

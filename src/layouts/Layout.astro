@@ -4,13 +4,14 @@ import { GlobalLoader } from "@/shared/components/GlobalLoader";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>To Talk</title>
+		<meta name="description" content="Demo de portafolio de una cartelera de cine: elige película, función, asientos y snacks, con pago simulado y ticket descargable." />
+		<title>To Talk | Cine de demostración</title>
 
 		{/* Prevent theme flash by applying theme before page renders */}
 		<script is:inline>
@@ -46,6 +47,11 @@ import { GlobalLoader } from "@/shared/components/GlobalLoader";
 	<body>
 		<GlobalLoader client:load />
 		<slot />
+		<div class="fixed inset-x-0 bottom-0 z-[9999] pointer-events-none flex justify-center px-4 pb-2">
+			<span class="rounded-full border border-border/40 bg-background/85 px-3 py-1 text-[10px] text-muted-foreground backdrop-blur">
+				Demo de portafolio – datos y pagos simulados
+			</span>
+		</div>
 	</body>
 </html>
 

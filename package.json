@@ -2,6 +2,10 @@
   "name": "frontend-cine",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
